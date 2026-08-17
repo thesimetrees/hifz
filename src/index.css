@@ -4,7 +4,7 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
-  --color-deep: #000;
+  --color-deep: #2b2e33;
   --color-green: #92c841;
   --color-mint: #eef7dc;
   --color-gold: #f48121;
@@ -53,7 +53,7 @@
   --lime: #92c841;
   --green: #92c841;
   --mint: #eef7dc;
-  --black: #000000;
+  --black: #2b2e33;
   --white: #ffffff;
   --gold: #f48121;
 
@@ -143,10 +143,30 @@ h1, h2, h3, h4 {
   font-size: 14px;
   font-weight: 500;
   padding: 12px 28px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   line-height: 1.45;
   transition: all 0.25s ease;
   white-space: nowrap;
+}
+
+/* Ukuran tombol: besar / sedang (default) / kecil */
+.btn--besar {
+  font-size: 15px;
+  padding: 15px 34px;
+  border-radius: 12px;
+}
+
+.btn--sedang {
+  font-size: 14px;
+  padding: 12px 28px;
+  border-radius: 12px;
+}
+
+.btn--kecil {
+  font-size: 13px;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 12px;
 }
 
 /* ---------- Topbar (announcement marquee) ---------- */
@@ -263,7 +283,7 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.78);
   transition: color 0.2s;
@@ -439,7 +459,7 @@ h1, h2, h3, h4 {
   color: #2b2e33;
   transition: all 0.2s;
   padding: 9px 14px;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 
 .nav a:hover {
@@ -530,7 +550,7 @@ h1, h2, h3, h4 {
   font-weight: 600;
   color: #2b2e33;
   padding: 9px 14px;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: all 0.2s;
 }
 
@@ -787,7 +807,7 @@ h1, h2, h3, h4 {
   font-weight: 500;
   color: #2b2e33;
   padding: 9px 10px;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: color 0.2s ease;
 }
 
@@ -878,7 +898,7 @@ h1, h2, h3, h4 {
   padding: 13px 16px;
   font-size: 14px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -934,7 +954,7 @@ a.header-pop-item:hover {
 .header-pop-body strong {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -985,10 +1005,10 @@ a.header-pop-item:hover {
   justify-content: center;
   height: 34px;
   padding: 0 16px;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--gold, #f48121);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   transition: background 0.18s ease;
 }
@@ -1008,14 +1028,14 @@ a.header-pop-item:hover {
   align-items: center;
   gap: 6px;
   height: 40px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.03em;
   color: var(--deep);
   background: transparent;
   border: none;
   padding: 0 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   transition: all 0.2s;
 }
 
@@ -1058,7 +1078,7 @@ a.header-pop-item:hover {
   font-weight: 500;
   color: #2b2e33;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   transition: background 0.15s;
   text-align: left;
 }
@@ -1093,7 +1113,7 @@ a.header-pop-item:hover {
   color: #92c841;
   background: transparent;
   border: 1.5px solid #92c841;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: background 0.2s, color 0.2s;
 }
 
@@ -1105,14 +1125,14 @@ a.header-pop-item:hover {
 .link-masuk {
   font-size: 14.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   background: transparent;
   border: none;
   display: inline-flex;
   align-items: center;
   height: 36px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: color 0.2s;
 }
 
@@ -1130,7 +1150,7 @@ a.header-pop-item:hover {
   align-items: center;
   height: 36px;
   padding: 0 18px;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: background 0.2s, box-shadow 0.2s;
 }
 
@@ -1183,7 +1203,7 @@ a.header-pop-item:hover {
   width: 22px;
   height: 2.2px;
   border-radius: 999px;
-  background: #1a1a1a;
+  background: #2b2e33;
   transition: transform 0.25s ease, opacity 0.2s ease, width 0.25s ease;
 }
 
@@ -1272,7 +1292,7 @@ a.header-pop-item:hover {
 .mnav-teks strong {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .mnav-teks small {
@@ -1301,14 +1321,14 @@ a.header-pop-item:hover {
   justify-content: center;
   gap: 7px;
   padding: 12px 0;
-  border-radius: 999px;
-  font-size: 13.5px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .mobile-nav-cta .link-konsultasi {
   border: 1.5px solid rgba(0, 0, 0, 0.14);
-  color: #1a1a1a;
+  color: #2b2e33;
   background: #fff;
 }
 
@@ -1419,8 +1439,8 @@ main {
   gap: 8px;
   margin-top: 30px;
   padding: 12px 22px;
-  border-radius: 10px;
-  font-size: 14.5px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 500;
   background: #2b2e33;
   color: var(--white);
@@ -1664,8 +1684,8 @@ main {
     justify-content: flex-start;
     margin-top: 22px;
     padding: 10px 18px;
-    font-size: 13.5px;
-    border-radius: 9px;
+    font-size: 14px;
+    border-radius: 12px;
   }
 
   .hero-guru {
@@ -1702,7 +1722,7 @@ main {
   font-size: clamp(24px, 2.4vw, 32px);
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: #000;
+  color: #2b2e33;
   margin: 0 0 20px;
 }
 
@@ -1779,7 +1799,7 @@ main {
   font-size: 19px;
   font-weight: 500;
   line-height: 1.3;
-  color: #000;
+  color: #2b2e33;
   margin: 8px 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1816,7 +1836,7 @@ main {
   gap: 4px;
   font-size: 14px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .trend-nilai svg {
@@ -1843,7 +1863,7 @@ main {
 .trend-harga {
   font-size: 18px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .trend-harga-coret {
@@ -1875,7 +1895,7 @@ main {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
   background: var(--white);
-  color: #000;
+  color: #2b2e33;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
@@ -1902,7 +1922,7 @@ main {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
-  background: #111;
+  background: #2b2e33;
   transform-origin: bottom right;
   cursor: grab;
 }
@@ -1982,7 +2002,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--gold);
   margin-top: 14px;
@@ -2114,7 +2134,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--green);
   margin-top: 16px;
@@ -2186,7 +2206,7 @@ main {
   align-items: center;
   gap: 8px;
   padding: 14px 26px;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--gold);
   color: #fff;
   font-size: 15px;
@@ -2212,7 +2232,7 @@ main {
   font-size: 26px;
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1;
 }
 
@@ -2561,7 +2581,7 @@ main {
   background: none;
   font: inherit;
   font-size: 15px;
-  color: #1a1a1a;
+  color: #2b2e33;
   outline: none;
 }
 
@@ -2576,7 +2596,7 @@ main {
   width: 24px;
   height: 24px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: rgba(0, 0, 0, 0.06);
   color: #2b2e33;
   cursor: pointer;
@@ -2688,7 +2708,7 @@ main {
 }
 
 .bnc-kartu .phc-body h3 a {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .bnc-kartu:hover .phc-body h3 a {
@@ -2897,10 +2917,10 @@ main {
   background: #fff;
   color: var(--deep, #92c841);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   padding: 10px 22px;
-  border-radius: 999px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
@@ -2949,7 +2969,7 @@ main {
 .cookie-text b {
   display: block;
   font-size: 14.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
   letter-spacing: 0.01em;
   margin-bottom: 5px;
 }
@@ -3171,14 +3191,14 @@ main {
 .auth-title {
   font-size: 21px;
   letter-spacing: -0.02em;
-  color: #000;
+  color: #2b2e33;
   margin-bottom: 5px;
 }
 
 .auth-sub {
   font-size: 13px;
   line-height: 1.55;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 16px;
 }
 
@@ -3207,7 +3227,7 @@ main {
 .auth-field > span {
   font-size: 12.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .auth-field input {
@@ -3215,7 +3235,7 @@ main {
   padding: 10px 13px;
   font-size: 13.5px;
   font-family: inherit;
-  color: #000;
+  color: #2b2e33;
   background: var(--white);
   border: 1px solid #dfe4e2;
   border-radius: 12px;
@@ -3274,7 +3294,7 @@ main {
   align-items: flex-start;
   gap: 9px;
   font-size: 13px;
-  color: #1a1a1a;
+  color: #2b2e33;
   cursor: pointer;
 }
 
@@ -3330,7 +3350,7 @@ main {
 .auth-alt {
   margin-top: 14px;
   font-size: 13px;
-  color: #1a1a1a;
+  color: #2b2e33;
   text-align: center;
 }
 
@@ -3354,7 +3374,7 @@ main {
   border-radius: 14px;
   background: rgba(146, 200, 65, 0.12);
   border: 1px solid rgba(39, 144, 58, 0.3);
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .auth-success b {
@@ -3409,7 +3429,7 @@ main {
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
@@ -4139,7 +4159,7 @@ main {
   gap: clamp(24px, 4vw, 48px);
   flex-wrap: wrap;
   background: var(--deep);
-  border-radius: 20px;
+  border-radius: 12px;
   padding: clamp(32px, 5vw, 56px);
 }
 
@@ -4152,7 +4172,7 @@ main {
 }
 
 .tcta-copy p {
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.72);
   max-width: 480px;
@@ -4469,7 +4489,7 @@ main {
 }
 
 .pengajar-home .kdetail-pendidikan-teks > span {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .kdetail-pendidikan-teks small {
@@ -4749,7 +4769,7 @@ main {
   font-size: 13.5px;
   font-weight: 500;
   line-height: 1.3;
-  color: #000;
+  color: #2b2e33;
 }
 
 .kdetail-pengajar-idn strong svg {
@@ -5420,7 +5440,7 @@ main {
 .kurikulum-home-copy h2 {
   font-size: clamp(30px, 4vw, 46px);
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   letter-spacing: -0.02em;
   line-height: 1.25;
   max-width: 22ch;
@@ -5445,7 +5465,7 @@ main {
   overflow: hidden;
   border: 0;
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
-  background: #000;
+  background: #2b2e33;
 }
 
 .kurikulum-home-video iframe {
@@ -5485,7 +5505,7 @@ main {
 .jp-head h2 {
   font-size: clamp(30px, 4vw, 46px);
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   letter-spacing: -0.02em;
   line-height: 1.22;
   margin-bottom: 14px;
@@ -5618,7 +5638,7 @@ main {
   color: #fff;
   background: var(--deep);
   padding: 12px 26px;
-  border-radius: 11px;
+  border-radius: 12px;
   transition: gap 0.2s ease, background 0.2s ease;
 }
 
@@ -5643,7 +5663,7 @@ main {
 /* ---- Hero tutor ---- */
 .tutor-hero {
   background: var(--white);
-  padding: 92px 0 40px;
+  padding: 56px 0 40px;
 }
 
 .tutor-hero-grid {
@@ -5714,8 +5734,8 @@ main {
   height: 46px;
   padding: 0 22px;
   border: 1px solid rgba(255, 255, 255, 0.32);
-  border-radius: 8px;
-  font-size: 13.5px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: #fff;
   transition: background 0.2s ease, border-color 0.2s ease;
@@ -6411,10 +6431,10 @@ main {
   width: 100%;
   padding: 8px 11px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   text-align: left;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.55);
   white-space: nowrap;
@@ -6654,7 +6674,7 @@ main {
   border: 0;
   background: none;
   color: inherit;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
 }
@@ -6799,7 +6819,7 @@ main {
   width: 100%;
   padding: 9px 12px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   font-size: 13px;
   font-weight: 500;
@@ -7090,7 +7110,7 @@ main {
   color: #d96f15;
 }
 .db--admin .db-statcell:last-child em {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db--admin .db-cols {
@@ -7131,28 +7151,28 @@ main {
 
 /* Teks konten admin = hitam, hierarki lewat ketebalan */
 .db--admin .db-main {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db--admin .db-block-head h4 {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 700;
 }
 
 .db--admin .db-statcell strong {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 700;
 }
 
 .db--admin .db-mini strong {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 600;
 }
 
 .db--admin .db-form-program label > span,
 .db--admin .db-form-gambar > span,
 .db--admin .db-block-head button {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 600;
 }
 
@@ -7160,7 +7180,7 @@ main {
 .db--admin .db-statcell em,
 .db--admin .db-statcell:last-child em,
 .db--admin .db-block-sub {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 500;
 }
 
@@ -7169,7 +7189,7 @@ main {
 .db--admin .db-mini span,
 .db--admin .db-mini-sesi,
 .db--admin .db-gambar-hint {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 400;
 }
 
@@ -7190,7 +7210,7 @@ main {
 .db--admin .db-main select,
 .db--admin .db-main .db-f > span,
 .db--admin .db-main em:not(.db-status) {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db--admin .db-top h1 {
@@ -7355,7 +7375,7 @@ main {
   gap: 7px;
   padding: 9px 16px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--lime, #92c841);
   color: var(--white);
   font-size: 13px;
@@ -7377,13 +7397,13 @@ main {
 
 .db-btn--lg {
   padding: 12px 22px;
-  font-size: 13.5px;
-  border-radius: 11px;
+  font-size: 14px;
+  border-radius: 12px;
 }
 
 .db-btn--sm {
   padding: 7px 13px;
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -7622,7 +7642,7 @@ main {
 .db-kelas-stats strong {
   font-size: 14.5px;
   font-weight: 600;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -7757,7 +7777,7 @@ main {
 .db-kelas-isi strong {
   font-size: 14px;
   font-weight: 600;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
   line-height: 1.4;
 }
 
@@ -7927,7 +7947,7 @@ main {
 .db-agenda-isi strong {
   font-size: 13px;
   font-weight: 500;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -8138,7 +8158,7 @@ main {
   justify-content: center;
   flex: 1;
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .db-prog-side .db-block {
@@ -8368,7 +8388,7 @@ main {
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 8px;
   font-size: 13.5px;
-  color: #111;
+  color: #2b2e33;
   background: #fcfcfc;
 }
 
@@ -8435,7 +8455,7 @@ main {
   border-radius: 8px;
   font-size: 13px;
   background: #fcfcfc;
-  color: #111;
+  color: #2b2e33;
 }
 
 .db-modul-form input:focus,
@@ -8543,7 +8563,7 @@ main {
   border: 0;
   background: transparent;
   color: var(--green, #0fbeeb);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -8593,7 +8613,7 @@ main {
   background: transparent;
   font-size: 13.5px;
   font-family: inherit;
-  color: #111;
+  color: #2b2e33;
 }
 
 .db-prog-cari input::placeholder {
@@ -8624,7 +8644,7 @@ main {
 
 .db-prog-cari-clear:hover {
   background: rgba(0, 0, 0, 0.12);
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-prog-kanan {
@@ -8652,10 +8672,10 @@ main {
   height: 32px;
   padding: 0 14px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   background: transparent;
   color: rgba(0, 0, 0, 0.65);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -8663,7 +8683,7 @@ main {
 }
 
 .db-prog-seg button:hover {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-prog-seg button.is-aktif {
@@ -8725,7 +8745,7 @@ main {
 .db-prog-kosong strong {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-prog-kosong p {
@@ -8822,7 +8842,7 @@ main {
 .db-prog-kartu-judul {
   font-size: 13.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -9070,7 +9090,7 @@ main {
   font-weight: 600;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: 12px;
   transition: background 0.18s ease;
 }
 
@@ -9184,7 +9204,7 @@ main {
 .db-notif-body p {
   font-size: 13px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.4;
   margin-bottom: 3px;
 }
@@ -9220,7 +9240,7 @@ main {
   border: 0;
   background: transparent;
   color: #5c8226;
-  border-radius: 7px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease;
 }
@@ -9279,7 +9299,7 @@ main {
 .db-stat-mini li strong {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1;
 }
 
@@ -9417,9 +9437,9 @@ main {
   gap: 6px;
   padding: 6px 13px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: transparent;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.52);
   cursor: pointer;
@@ -9442,7 +9462,7 @@ main {
 
 .db-riw-filter button.is-active {
   background: #fff;
-  color: #1a1a1a;
+  color: #2b2e33;
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -9501,7 +9521,7 @@ main {
   width: 30px;
   height: 30px;
   border: 1px solid rgba(0, 0, 0, 0.16);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
   color: var(--deep);
   cursor: pointer;
@@ -9510,7 +9530,7 @@ main {
 .db-td-btn--bayar {
   width: auto;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--gold, #0fbeeb);
   border: 0;
@@ -9798,7 +9818,7 @@ img.db-top-ava {
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 8px;
   font-size: 13.5px;
-  color: #111;
+  color: #2b2e33;
   background: #fcfcfc;
 }
 
@@ -9951,7 +9971,7 @@ img.db-top-ava {
 .db--user .db-cek-lapor-head strong,
 .db--user .db-kelas-isi strong,
 .db--user .db-jadwal-pilihan select {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db--user .db-kelas-stats {
@@ -10050,7 +10070,7 @@ img.db-top-ava {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.14);
   background: #fff;
   color: #6a7076;
@@ -10281,7 +10301,7 @@ img.db-top-ava {
     border: 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     background: transparent;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 500;
     color: rgba(0, 0, 0, 0.75);
     text-align: left;
@@ -10550,11 +10570,11 @@ img.db-top-ava {
 
   .db-subnav button {
     color: rgba(0, 0, 0, 0.65);
-    border-radius: 9px;
+    border-radius: 12px;
   }
 
   .db-subnav button:hover {
-    color: var(--deep, #000);
+    color: var(--deep, #2b2e33);
     transform: none;
   }
 
@@ -10738,7 +10758,7 @@ img.db-top-ava {
   font: inherit;
   font-size: 13px;
   background: #fcfcfc;
-  color: #111;
+  color: #2b2e33;
   min-height: 88px;
   resize: vertical;
 }
@@ -10926,7 +10946,7 @@ img.db-top-ava {
   font-size: 13px;
   font-family: inherit;
   background: #fff;
-  color: #111;
+  color: #2b2e33;
   resize: vertical;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
@@ -10954,7 +10974,7 @@ img.db-top-ava {
   border-radius: 10px;
   font-size: 13px;
   font-family: inherit;
-  color: #111;
+  color: #2b2e33;
   background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f48121' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 13px center / 15px;
 }
 
@@ -11146,7 +11166,7 @@ img.db-top-ava {
   font-family: inherit;
   line-height: 1.6;
   background: #fcfcfc;
-  color: #111;
+  color: #2b2e33;
   resize: vertical;
 }
 
@@ -11168,7 +11188,7 @@ img.db-top-ava {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(0, 0, 0, 0.18);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
   color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
@@ -11269,7 +11289,7 @@ img.db-top-ava {
   font-size: 13px;
   font-family: inherit;
   background: #fff;
-  color: #111;
+  color: #2b2e33;
   resize: vertical;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
@@ -11401,7 +11421,7 @@ img.db-top-ava {
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   overflow: hidden;
-  background: #000;
+  background: #2b2e33;
 }
 
 .lms-player iframe {
@@ -11458,10 +11478,10 @@ img.db-top-ava {
   align-items: center;
   gap: 6px;
   padding: 7px 13px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.16);
   background: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.62);
   cursor: pointer;
@@ -12083,7 +12103,7 @@ img.db-top-ava {
 .db-tema-teks strong {
   font-size: 13px;
   font-weight: 500;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
 }
 
 .db-tema-teks em {
@@ -12228,7 +12248,7 @@ img.db-top-ava {
 .db-cek-isi strong {
   font-size: 13px;
   font-weight: 500;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
 }
 
 .db-cek-isi > span {
@@ -12334,7 +12354,7 @@ img.db-top-ava {
 .db-cek-lapor-head strong {
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
   flex: 1;
 }
 
@@ -12384,7 +12404,7 @@ img.db-top-ava {
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
-  color: var(--deep, #000);
+  color: var(--deep, #2b2e33);
   cursor: pointer;
   padding: 4px 0;
   max-width: 168px;
@@ -12408,7 +12428,7 @@ img.db-top-ava {
   font-family: inherit;
   font-size: 12.5px;
   line-height: 1.55;
-  color: #111;
+  color: #2b2e33;
   background: #fcfcfc;
   resize: vertical;
 }
@@ -12457,7 +12477,7 @@ img.db-top-ava {
 }
 
 .phc .psec-title {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-size: clamp(30px, 4vw, 46px);
   font-weight: 700;
 }
@@ -12623,7 +12643,7 @@ img.db-top-ava {
   gap: 8px;
   height: 44px;
   padding: 0 22px;
-  border-radius: 999px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
   color: #fff;
@@ -12869,7 +12889,7 @@ img.db-top-ava {
 }
 
 .phc-body h3 a {
-  color: #1a1a1a;
+  color: #2b2e33;
   transition: color 0.2s ease;
 }
 
@@ -13033,7 +13053,7 @@ img.db-top-ava {
   border-radius: 8px;
   font-size: 13px;
   background: #fcfcfc;
-  color: #111;
+  color: #2b2e33;
   font-family: inherit;
   resize: vertical;
 }
@@ -13252,7 +13272,7 @@ img.db-top-ava {
   border-radius: 8px;
   font-size: 13px;
   background: #fcfcfc;
-  color: #111;
+  color: #2b2e33;
 }
 
 .db-tf select:focus {
@@ -13369,7 +13389,7 @@ img.db-top-ava {
   background: transparent;
   font-size: 12.5px;
   width: 190px;
-  color: #111;
+  color: #2b2e33;
 }
 
 .db-toko-cari input:focus {
@@ -13457,7 +13477,7 @@ img.db-top-ava {
 .tk-galeri-thumbs button {
   width: 62px;
   height: 62px;
-  border-radius: 11px;
+  border-radius: 12px;
   border: 2px solid transparent;
   padding: 0;
   overflow: hidden;
@@ -13699,7 +13719,7 @@ img.db-top-ava {
 }
 
 .dunia-home .psec-title {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-size: clamp(30px, 4vw, 46px);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -13737,7 +13757,7 @@ img.db-top-ava {
 .dunia-label {
   font-size: 8px;
   font-weight: 600;
-  fill: #1a1a1a;
+  fill: #2b2e33;
   paint-order: stroke;
   stroke: #fff;
   stroke-width: 2.4px;
@@ -13989,7 +14009,7 @@ img.db-top-ava {
 }
 
 .berita-home .bnc-body h3 a {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .berita-home .bnc-card:hover .bnc-body h3 a {
@@ -14587,7 +14607,7 @@ img.db-top-ava {
   font-weight: 700;
   color: #fff;
   background: var(--gold, #f48121);
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 8px 16px;
   margin-bottom: 22px;
 }
@@ -14848,7 +14868,7 @@ img.db-top-ava {
   font-weight: 700;
   letter-spacing: normal;
   word-spacing: normal;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 14px;
   cursor: pointer;
   user-select: none;
@@ -14857,7 +14877,7 @@ img.db-top-ava {
 .prg-blok-chev {
   margin-left: auto;
   flex: none;
-  color: #1a1a1a;
+  color: #2b2e33;
   transition: transform 0.2s ease;
 }
 
@@ -14913,7 +14933,7 @@ img.db-top-ava {
 .prg-lain > .container > h2 {
   font-size: 20px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 14px;
 }
 
@@ -14950,7 +14970,7 @@ img.db-top-ava {
   gap: 11px;
   font-size: 13.5px;
   line-height: 1.55;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .prg-belajar-ic {
@@ -15004,7 +15024,7 @@ img.db-top-ava {
   display: block;
   font-size: 13.5px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .prg-info span {
@@ -15024,7 +15044,7 @@ img.db-top-ava {
 }
 
 .prg-main .prg-blok > h2 {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .prg-main .prg-blok .prg-belajar-ic {
@@ -15050,7 +15070,7 @@ img.db-top-ava {
 .prg-main .prg-blok span,
 .prg-main .prg-blok strong,
 .prg-main .prg-blok td {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .prg-hero-desc,
@@ -15080,7 +15100,7 @@ img.db-top-ava {
   display: block;
   font-size: 13.5px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .prg-guru span {
@@ -15124,7 +15144,7 @@ img.db-top-ava {
   margin: 0 0 16px;
   font-size: 13.5px;
   line-height: 1.65;
-  color: #1a1a1a;
+  color: #2b2e33;
   flex: 1;
 }
 
@@ -15144,7 +15164,7 @@ img.db-top-ava {
   display: block;
   font-size: 12.5px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .prg-testi figcaption em {
@@ -15183,7 +15203,7 @@ img.db-top-ava {
 .prg-damping h3 {
   font-size: 15px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 6px;
 }
 
@@ -15217,7 +15237,7 @@ img.db-top-ava {
   padding: 15px 2px;
   font-size: 15px;
   font-weight: 500;
-  color: #000;
+  color: #2b2e33;
 }
 
 .prg-faq summary::-webkit-details-marker {
@@ -15311,7 +15331,7 @@ img.db-top-ava {
   font-weight: 700;
   letter-spacing: normal;
   word-spacing: normal;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
 }
 
@@ -15337,7 +15357,7 @@ img.db-top-ava {
 .prg-kur-narasi {
   font-size: 13.5px;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
 }
 
@@ -15404,7 +15424,7 @@ img.db-top-ava {
   font-weight: 600;
   letter-spacing: normal;
   word-spacing: normal;
-  color: var(--black, #111);
+  color: var(--black, #2b2e33);
   margin: 0;
   padding-top: 6px;
 }
@@ -15471,7 +15491,7 @@ img.db-top-ava {
   gap: 7px;
   margin-top: 16px;
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(39, 144, 58, 0.25);
   background: var(--mint, rgba(39, 144, 58, 0.08));
   font-size: 12.5px;
@@ -15515,7 +15535,7 @@ img.db-top-ava {
 .prg-materi .prg-mat h5 {
   font-size: 13.5px;
   font-weight: 500;
-  color: var(--black, #111);
+  color: var(--black, #2b2e33);
   margin: 0 0 3px;
 }
 
@@ -15576,7 +15596,7 @@ img.db-top-ava {
 .prg-mat h3 {
   font-size: 15.5px;
   font-weight: 500;
-  color: var(--black, #111);
+  color: var(--black, #2b2e33);
   margin: 0 0 4px;
 }
 
@@ -15724,7 +15744,7 @@ img.db-top-ava {
 }
 
 .prg-card--beli .prg-card-btn:hover {
-  background: #1a1a1a;
+  background: #2b2e33;
   border-color: transparent;
 }
 
@@ -15734,7 +15754,7 @@ img.db-top-ava {
 }
 
 .prg-card--beli .prg-card-masuk:hover {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .prg-card-harga {
@@ -15742,7 +15762,7 @@ img.db-top-ava {
   font-size: 26px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .prg-card-sub {
@@ -15793,12 +15813,12 @@ img.db-top-ava {
   text-align: center;
   font-size: 12.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-top: 12px;
 }
 
 .prg-card-masuk:hover {
-  color: #000;
+  color: #2b2e33;
 }
 
 .prg-card-judul {
@@ -15844,10 +15864,10 @@ img.db-top-ava {
   justify-content: center;
   gap: 7px;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.14);
   background: #fff;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--deep);
   cursor: pointer;
@@ -15900,7 +15920,7 @@ img.db-top-ava {
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: var(--black, #111);
+  color: var(--black, #2b2e33);
 }
 
 .prg-tutorlist span {
@@ -16286,12 +16306,12 @@ img.db-top-ava {
   align-items: center;
   gap: 6px;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--deep);
   background: var(--mint);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0 14px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -16463,7 +16483,7 @@ img.db-top-ava {
   color: var(--deep);
   background: var(--mint);
   border: none;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 7px 14px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -17246,9 +17266,9 @@ img.db-top-ava {
   gap: 9px;
   background: var(--gold);
   color: #fff;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 12px 20px;
   transition: background 0.2s ease;
 }
@@ -17269,13 +17289,13 @@ img.db-top-ava {
   color: #d96f12;
   font-size: 11px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 
 .tk-cart-btn--kecil {
   margin-left: auto;
   padding: 9px 16px;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 /* ---- Toolbar katalog ---- */
@@ -17324,7 +17344,7 @@ img.db-top-ava {
 }
 
 .tk-kartu .phc-body h3 {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-size: 15.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -17396,7 +17416,7 @@ img.db-top-ava {
   align-items: center;
   gap: 6px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--gold);
   color: #fff;
   font-size: 12px;
@@ -17668,7 +17688,7 @@ img.db-top-ava {
   font-size: 16.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -17775,9 +17795,9 @@ img.db-top-ava {
   border: 0;
   background: var(--mint);
   color: var(--green);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -17866,7 +17886,7 @@ img.db-top-ava {
   font-size: clamp(22px, 3vw, 28px);
   font-weight: 700;
   letter-spacing: -0.015em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 22px;
 }
 
@@ -17918,7 +17938,7 @@ img.db-top-ava {
 .tk-galeri-thumb button {
   width: 68px;
   height: 68px;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   border: 2px solid transparent;
   padding: 0;
@@ -17954,7 +17974,7 @@ img.db-top-ava {
   font-size: clamp(24px, 3vw, 32px);
   font-weight: 700;
   letter-spacing: -0.015em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 10px 0 8px;
   line-height: 1.22;
 }
@@ -17964,7 +17984,7 @@ img.db-top-ava {
   align-items: center;
   gap: 14px;
   font-size: 13px;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 16px;
 }
 
@@ -17990,7 +18010,7 @@ img.db-top-ava {
 .tk-ringkas {
   font-size: 14px;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 20px;
 }
 
@@ -18017,7 +18037,7 @@ img.db-top-ava {
   color: #3f3f3f;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 8px 16px;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -18045,7 +18065,7 @@ img.db-top-ava {
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 999px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -18115,10 +18135,10 @@ img.db-top-ava {
   gap: 8px;
   background: var(--green);
   color: #fff;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   border: 1.5px solid var(--green);
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 13px 26px;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -18139,7 +18159,7 @@ img.db-top-ava {
 
 .tk-btn--garis {
   background: #fff;
-  color: #1a1a1a;
+  color: #2b2e33;
   border-color: var(--lime);
 }
 
@@ -18179,7 +18199,7 @@ img.db-top-ava {
   gap: 8px;
   font-size: 12.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-jaminan svg {
@@ -18196,14 +18216,14 @@ img.db-top-ava {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 12px;
 }
 
 .tk-deskripsi p {
   font-size: 14px;
   line-height: 1.8;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
 }
 
@@ -18227,7 +18247,7 @@ img.db-top-ava {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 14px;
 }
 
@@ -18281,7 +18301,7 @@ img.db-top-ava {
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
 }
 
@@ -18339,7 +18359,7 @@ img.db-top-ava {
 .tk-krj-info h3 {
   font-size: 14.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 3px 0 4px;
 }
 
@@ -18353,7 +18373,7 @@ img.db-top-ava {
 .tk-krj-harga {
   font-size: 13.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-krj-aksi {
@@ -18402,7 +18422,7 @@ img.db-top-ava {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 16px;
 }
 
@@ -18411,12 +18431,12 @@ img.db-top-ava {
   align-items: center;
   justify-content: space-between;
   font-size: 13.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
   padding: 7px 0;
 }
 
 .tk-ringkasan-baris strong {
-  color: #1a1a1a;
+  color: #2b2e33;
   font-weight: 600;
 }
 
@@ -18438,7 +18458,7 @@ img.db-top-ava {
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: #1a1a1a;
+  color: #2b2e33;
   background: var(--mint);
   border-radius: 8px;
   padding: 8px 12px;
@@ -18474,12 +18494,12 @@ img.db-top-ava {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0;
 }
 
 .tk-alamat-head h3 svg {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-alamat-tambah {
@@ -18487,30 +18507,30 @@ img.db-top-ava {
   align-items: center;
   gap: 5px;
   background: #fff;
-  border: 1.5px solid #1a1a1a;
-  color: #1a1a1a;
+  border: 1.5px solid #2b2e33;
+  color: #2b2e33;
   font-size: 12.5px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 7px 14px;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .tk-alamat-tambah:hover {
-  background: #1a1a1a;
+  background: #2b2e33;
   color: #fff;
 }
 
 .tk-alamat-maks {
   font-size: 12.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-alamat-kosong {
   font-size: 13px;
-  color: #1a1a1a;
+  color: #2b2e33;
   background: var(--mint);
   border-radius: 10px;
   padding: 12px 14px;
@@ -18535,16 +18555,16 @@ img.db-top-ava {
 }
 
 .tk-alamat-item:hover {
-  border-color: #1a1a1a;
+  border-color: #2b2e33;
 }
 
 .tk-alamat-item.is-aktif {
-  border-color: #1a1a1a;
+  border-color: #2b2e33;
   background: #fafafa;
 }
 
 .tk-alamat-item input {
-  accent-color: #1a1a1a;
+  accent-color: #2b2e33;
   margin-top: 3px;
   flex-shrink: 0;
 }
@@ -18559,12 +18579,12 @@ img.db-top-ava {
 .tk-alamat-isi strong {
   font-size: 13.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-alamat-isi small {
   font-size: 12.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.5;
 }
 
@@ -18583,7 +18603,7 @@ img.db-top-ava {
   background: transparent;
   border: 0;
   border-radius: 8px;
-  color: #1a1a1a;
+  color: #2b2e33;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -18593,7 +18613,7 @@ img.db-top-ava {
 
 .tk-alamat-ubah:hover {
   background: #f0f0f0;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-alamat-form {
@@ -18670,7 +18690,7 @@ img.db-top-ava {
   gap: 7px;
   font-size: 12.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tk-co-grid input,
@@ -18679,7 +18699,7 @@ img.db-top-ava {
   font: inherit;
   font-size: 13.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
   border: 1px solid #e4e4e4;
   border-radius: 8px;
   background: #fff;
@@ -18813,7 +18833,7 @@ img.db-top-ava {
   font-weight: 600;
   color: #2b2e33;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 6px 13px;
   text-decoration: none;
   background: #fff;
@@ -18867,7 +18887,7 @@ img.db-top-ava {
 .cop-orang-nama strong {
   font-size: 14.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .cop-orang-nama small {
@@ -18921,7 +18941,7 @@ img.db-top-ava {
 .cop-data-grid strong {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.5;
 }
 
@@ -18976,7 +18996,7 @@ img.db-top-ava {
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 2px;
 }
 
@@ -19016,7 +19036,7 @@ img.db-top-ava {
   display: block;
   font-size: 13.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 4px;
 }
 
@@ -19036,7 +19056,7 @@ img.db-top-ava {
   color: #c05f0d;
   background: #fff;
   border: 1px solid rgba(244, 129, 33, 0.4);
-  border-radius: 999px;
+  border-radius: 12px;
   padding: 6px 13px;
   text-decoration: none;
 }
@@ -19138,7 +19158,7 @@ img.db-top-ava {
 .cop-modal {
   width: min(340px, 100%);
   padding: 22px 20px 20px;
-  color: #1a1a1a;
+  color: #2b2e33;
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
 }
@@ -19146,7 +19166,7 @@ img.db-top-ava {
 .cop-modal-head h3 {
   font-size: 17px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 4px;
 }
 
@@ -19179,7 +19199,7 @@ img.db-top-ava {
 
 .cop-modal-rinci strong {
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .cop-qr {
@@ -19279,7 +19299,7 @@ img.db-top-ava {
 .cop-modal .tk-btn--garis:hover:not(:disabled) {
   background: #fff;
   border-color: var(--lime);
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .cop-modal .cop-bukti label span {
@@ -19309,7 +19329,7 @@ img.db-top-ava {
 .cop-modal-ok h3 {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .cop-modal-ok p {
@@ -19389,7 +19409,7 @@ img.db-top-ava {
 .db-ana-head strong {
   font-size: 13.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -19553,7 +19573,7 @@ img.db-top-ava {
 .db-donut-info b {
   margin-left: auto;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-stack {
@@ -19600,7 +19620,7 @@ img.db-top-ava {
 .cop-bukti input[type='text'] {
   font: inherit;
   font-size: 13.5px;
-  color: #111;
+  color: #2b2e33;
   background: #fcfcfc;
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 8px;
@@ -20633,7 +20653,7 @@ img.db-top-ava {
   text-align: left;
   padding: 9px 12px;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   cursor: pointer;
   font-family: inherit;
@@ -20706,7 +20726,7 @@ img.db-top-ava {
   font-size: 13px;
   font-weight: 500;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: 12px;
   cursor: pointer;
 }
 .db-nilai-pilih button.is-aktif {
@@ -20737,7 +20757,7 @@ img.db-top-ava {
   flex: 1 1 160px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 .db-nilai-list input {
   flex: 2 1 220px;
@@ -20798,7 +20818,7 @@ img.db-top-ava {
 .db-gj-hari li strong {
   font-size: 13.5px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 .db-gj-hari li span {
   font-size: 12px;
@@ -20836,7 +20856,7 @@ img.db-top-ava {
 .db.db--guru .db-peserta strong,
 .db.db--guru .db-nilai-list li > strong,
 .db.db--guru .db-gj-hari li strong {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 .db.db--guru .db-block {
   border: 0;
@@ -20953,7 +20973,7 @@ img.db-top-ava {
 .db-guru-kartu-isi strong {
   font-size: 14.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.35;
 }
 
@@ -20998,7 +21018,7 @@ img.db-top-ava {
 .db-kelas-info > strong {
   font-size: 17px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-kelas-chips {
@@ -21038,7 +21058,7 @@ img.db-top-ava {
 .db-guru-stats strong {
   font-size: 19px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-guru-stats span {
@@ -21063,7 +21083,7 @@ img.db-top-ava {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-kelas-sesi > div > span {
@@ -21105,7 +21125,7 @@ img.db-top-ava {
 .db-materi-list strong {
   font-size: 13.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .db-materi-list li > div > p {
@@ -21176,7 +21196,7 @@ img.db-top-ava {
   min-width: 0;
   font-size: 12.5px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #2b2e33;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -21441,8 +21461,8 @@ img.db-top-ava {
   color: inherit;
 }
 .db-user-chip.is-aktif {
-  border-color: #1a1a1a;
-  background: #1a1a1a;
+  border-color: #2b2e33;
+  background: #2b2e33;
   color: #fff;
 }
 .db-user-chip.is-aktif strong {
@@ -21556,7 +21576,7 @@ img.db-top-ava {
 .db-um-head-teks strong {
   display: block;
   font-size: 16.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 .db-um-head-teks > span {
   display: block;
@@ -21634,7 +21654,7 @@ img.db-top-ava {
 .db-um-grid dd {
   margin: 0;
   font-size: 13.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
   line-height: 1.45;
 }
 .db-um-id {
@@ -21774,7 +21794,7 @@ img.db-top-ava {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.15;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin: 0 0 14px;
   max-width: 640px;
 }
@@ -21784,12 +21804,12 @@ img.db-top-ava {
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: -0.01em;
-  color: #1a1a1a;
+  color: #2b2e33;
   max-width: 720px;
 }
 
 .tt-intro p strong {
-  color: #1a1a1a;
+  color: #2b2e33;
 }
 
 .tt-intro .tt-label {
@@ -21832,7 +21852,7 @@ img.db-top-ava {
   display: block;
   font-size: 16.5px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2b2e33;
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
@@ -21887,7 +21907,7 @@ img.db-top-ava {
 .tt-sec-head h2 {
   font-size: clamp(26px, 3.2vw, 34px);
   line-height: 1.2;
-  color: #1a1a1a;
+  color: #2b2e33;
   letter-spacing: -0.01em;
 }
 
@@ -21905,7 +21925,7 @@ img.db-top-ava {
 .tt-arti-teks h2 {
   font-size: clamp(26px, 3.2vw, 34px);
   line-height: 1.22;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 18px;
   letter-spacing: -0.01em;
 }
@@ -21946,7 +21966,7 @@ img.db-top-ava {
 .tt-arti-kartu strong {
   display: block;
   font-size: 22px;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 8px;
 }
 
@@ -21988,7 +22008,7 @@ img.db-top-ava {
 
 .tt-kartu h3 {
   font-size: 15.5px;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 8px;
   line-height: 1.4;
 }
@@ -22030,7 +22050,7 @@ img.db-top-ava {
 .tt-nilai-kartu strong {
   display: block;
   font-size: 16px;
-  color: #1a1a1a;
+  color: #2b2e33;
   margin-bottom: 6px;
 }
 
@@ -22050,7 +22070,7 @@ img.db-top-ava {
   justify-content: space-between;
   gap: 26px;
   background: linear-gradient(135deg, #92c841 0%, #6fa62b 100%);
-  border-radius: 26px;
+  border-radius: 12px;
   padding: 44px 48px;
   color: #fff;
 }
@@ -22062,7 +22082,7 @@ img.db-top-ava {
 }
 
 .tt-cta-inner p {
-  font-size: 14.5px;
+  font-size: 15px;
   opacity: 0.92;
 }
 
@@ -22073,9 +22093,9 @@ img.db-top-ava {
   background: #fff;
   color: #4d7417;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 15px;
   padding: 14px 24px;
-  border-radius: 14px;
+  border-radius: 12px;
   white-space: nowrap;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
