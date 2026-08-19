@@ -1,0 +1,198 @@
+// Prisma schema Ihya — CMS super admin (PostgreSQL via Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// peran: admin | tutor | customer | pelamar
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nama      String
+  peran     String   @default("customer")
+  aktif     Boolean  @default(true)
+  telepon   String?
+  alamat    String?
+  bio       String?
+  foto      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programOrders ProgramOrder[]
+
+  @@map("users")
+}
+
+// status: draf | terbit — kurikulum: JSON tema -> sub-tema -> materi
+model Program {
+  id        String   @id @default(cuid())
+  nama      String
+  kategori  String
+  jenis     String
+  mode      String   @default("Online")
+  tutor     String
+  harga     Int      @default(0)
+  deskripsi String
+  gambar    String?
+  status    String   @default("draf")
+  peserta   Int      @default(0)
+  kurikulum String   @default("[]")
+  jadwal    String   @default("null")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders ProgramOrder[]
+
+  @@map("programs")
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  nama       String
+  kategori   String   @default("Umum")
+  harga      Int
+  hargaCoret Int      @default(0)
+  stok       Int      @default(0)
+  terjual    Int      @default(0)
+  gambar     String?
+  ringkas    String?
+  deskripsi  String?
+  aktif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("products")
+}
+
+// status: Menunggu | Lunas | Dibatalkan — jenis: toko | program
+model Order {
+  invoice     String   @id
+  item        String
+  metode      String
+  total       Int
+  status      String   @default("Menunggu")
+  jenis       String   @default("toko")
+  penerima    String
+  email       String?
+  programIds  String?
+  alamat      String?
+  invoiceFile String?
+  keterangan  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("orders")
+}
+
+// peserta program — terisi otomatis saat order program dikonfirmasi lunas
+model Enrollment {
+  id        String   @id @default(cuid())
+  email     String
+  programId String
+  createdAt DateTime @default(now())
+
+  @@unique([email, programId])
+  @@map("enrollments")
+}
+
+// status: draf | terbit
+model Post {
+  id        String   @id @default(cuid())
+  judul     String
+  kategori  String   @default("Artikel")
+  gambar    String?
+  ringkas   String?
+  penulis   String   @default("Tim Ihya")
+  konten    String?
+  status    String   @default("draf")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+// ---- Checkout program & konfirmasi QRIS manual ----
+
+// status: PENDING_PAYMENT | WAITING_CONFIRMATION | PROCESSING | CONFIRMED | REJECTED | EXPIRED | CANCELLED
+model ProgramOrder {
+  id            String    @id @default(cuid())
+  invoice       String    @unique
+  userId        String
+  programId     String
+  amountBase    Int
+  amountUnique  Int       @default(0)
+  amountTotal   Int
+  status        String    @default("PENDING_PAYMENT")
+  statusVersion Int       @default(0)
+  expiresAt     DateTime
+  lockedById    String?
+  lockedAt      DateTime?
+  confirmedAt   DateTime?
+  rejectReason  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id])
+  program Program        @relation(fields: [programId], references: [id])
+  proofs  PaymentProof[]
+
+  @@index([status, expiresAt])
+  @@index([userId, status])
+  @@map("program_orders")
+}
+
+// status: active | superseded | rejected
+model PaymentProof {
+  id         String   @id @default(cuid())
+  orderId    String
+  attempt    Int
+  senderName String
+  senderBank String?
+  imagePath  String
+  imageMime  String
+  imageSize  Int
+  status     String   @default("active")
+  createdAt  DateTime @default(now())
+
+  order ProgramOrder @relation(fields: [orderId], references: [id])
+
+  @@unique([orderId, attempt])
+  @@map("payment_proofs")
+}
+
+// type: new_payment_proof | payment_confirmed | payment_rejected | order_expired
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  orderId   String?
+  type      String
+  message   String
+  meta      String   @default("{}")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+// action: lock | unlock | approve | reject | auto_expire | auto_unlock — append-only
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  orderId   String
+  action    String
+  fromState String
+  toState   String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@map("audit_logs")
+}
