@@ -13,13 +13,13 @@ create table if not exists public.belajar (
 
 alter table public.belajar enable row level security;
 
--- terbuka seperti orders: ditulis guru/murid dari browser dengan anon key
+-- policy berbasis login (hindari warning "always true")
 drop policy if exists belajar_select on public.belajar;
 drop policy if exists belajar_insert on public.belajar;
 drop policy if exists belajar_update on public.belajar;
-create policy belajar_select on public.belajar for select using (true);
-create policy belajar_insert on public.belajar for insert with check (true);
-create policy belajar_update on public.belajar for update using (true) with check (true);
+create policy belajar_select on public.belajar for select using (auth.uid() is not null);
+create policy belajar_insert on public.belajar for insert with check (auth.uid() is not null);
+create policy belajar_update on public.belajar for update using (auth.uid() is not null) with check (auth.uid() is not null);
 
 -- aktifkan realtime
 do $$ begin
@@ -42,6 +42,6 @@ alter table public.profil_guru enable row level security;
 drop policy if exists profil_guru_select on public.profil_guru;
 drop policy if exists profil_guru_insert on public.profil_guru;
 drop policy if exists profil_guru_update on public.profil_guru;
-create policy profil_guru_select on public.profil_guru for select using (true);
-create policy profil_guru_insert on public.profil_guru for insert with check (true);
-create policy profil_guru_update on public.profil_guru for update using (true) with check (true);
+create policy profil_guru_select on public.profil_guru for select using (auth.uid() is not null);
+create policy profil_guru_insert on public.profil_guru for insert with check (auth.uid() is not null);
+create policy profil_guru_update on public.profil_guru for update using (auth.uid() is not null) with check (auth.uid() is not null);

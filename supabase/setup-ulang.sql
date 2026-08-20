@@ -28,7 +28,7 @@ $$ select peran from users where id = auth.uid()::text $$;
 
 -- ===== 3. TRIGGER: auto-konfirmasi email semua user baru =====
 create or replace function public.auto_confirm_user() returns trigger
-language plpgsql security definer as $$
+language plpgsql security definer set search_path = public as $$
 begin
   new.email_confirmed_at := coalesce(new.email_confirmed_at, now());
   return new;
@@ -96,14 +96,14 @@ alter table orders enable row level security;
 drop policy if exists orders_select on orders;
 drop policy if exists orders_insert on orders;
 drop policy if exists orders_update on orders;
-create policy orders_select on orders for select using (true);
-create policy orders_insert on orders for insert with check (true);
+create policy orders_select on orders for select using (auth.uid() is not null);
+create policy orders_insert on orders for insert with check (auth.uid() is not null);
 create policy orders_update on orders for update using (is_admin()) with check (is_admin());
 
 alter table enrollments enable row level security;
 drop policy if exists enrollments_select on enrollments;
 drop policy if exists enrollments_write on enrollments;
-create policy enrollments_select on enrollments for select using (true);
+create policy enrollments_select on enrollments for select using (auth.uid() is not null);
 create policy enrollments_write on enrollments for all using (is_admin()) with check (is_admin());
 
 -- ===== 6. BUAT AKUN ADMIN SAJA =====
