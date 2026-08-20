@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowLeft,
   ArrowUpRight,
   Award,
+  Mail,
+  Phone,
+  Activity,
   BadgeCheck,
   Bell,
   BellRing,
@@ -17,6 +20,8 @@ import {
   CheckCircle2,
   RefreshCw,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Clock,
   CreditCard,
@@ -24,29 +29,34 @@ import {
   Eye,
   FileText,
   GraduationCap,
-  Heart,
+  Headphones,
   HelpCircle,
   Hourglass,
+  Info,
+  Landmark,
   LayoutDashboard,
-  LayoutGrid,
   Lock,
   LogOut,
   MapPin,
-  MapPinned,
   MessagesSquare,
   MonitorPlay,
   PanelLeftClose,
   PanelLeftOpen,
   Paperclip,
   PlayCircle,
+  QrCode,
   ReceiptText,
+  Rocket,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
+  Star,
+  Target,
   Timer,
   UserCheck,
   UserRound,
   Video,
+  Wallet,
+  XCircle,
 } from 'lucide-react'
 import {
   formatRupiah,
@@ -56,10 +66,10 @@ import PlayerTertutup from '../../components/PlayerTertutup.jsx'
 import { bacaPesanan } from '../toko/tokoData.js'
 import { gambarKategori, inisial, jamSub, labelTipe, tanggalSub, youtubeId } from '../admin/adminData.js'
 import { api, kompresFoto } from '../../lib/api.js'
-import { daftarJadwal, formatTanggalPanjang, linkGoogleKalender, ringkasJadwal, sesiBerikutnya, unduhICS } from '../../lib/kalender.js'
-import { avatarGuru } from '../../lib/guru.js'
+import { daftarJadwal, formatTanggalPanjang, HARI, HARI_URUT, jadwalAktif, linkGoogleKalender, ringkasJadwal, sesiBerikutnya, unduhICS } from '../../lib/kalender.js'
+import { avatarGuru, muatFotoGuru } from '../../lib/guru.js'
 import { formatBerakhir, infoAkses } from '../../lib/langganan.js'
-import { absenHadir, bacaAbsensi, bacaPenilaian, bacaProgres, hitungProgres, ikutiProgram, jadwalUser, jadwalkanPengingat, pengingatAktif, pilihJadwal, setPengingat, sudahIkut } from '../../lib/progres.js'
+import { bacaAbsensi, bacaPenilaian, bacaProgres, hitungProgres, ikutiProgram, jadwalUser, jadwalkanPengingat, pengingatAktif, pilihJadwal, setPengingat, sinkronBelajar, sudahIkut, tandaiMateri } from '../../lib/progres.js'
 
 const API_WILAYAH = 'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@gh-pages/api'
 const KUNCI_PROFIL_DETAIL = 'hifzProfilDetail'
@@ -76,13 +86,12 @@ const ikonModul = { video: Video, dokumen: FileText, kuis: HelpCircle, 'sesi-onl
 const NAV = [
   { id: 'ringkasan', label: 'Ringkasan', icon: LayoutDashboard },
   { id: 'riwayat', label: 'Riwayat', icon: ReceiptText },
-  { id: 'rapot', label: 'Rapot Penilaian', icon: ClipboardList },
-  { id: 'konsultasi', label: 'Konsultasi', icon: MessagesSquare },
+  { id: 'rapot', label: 'Penilaian', icon: ClipboardList },
 ]
 
 const ikonAktivitas = {
   modul: BookOpenCheck,
-  kuis: Sparkles,
+  kuis: HelpCircle,
   sesi: PlayCircle,
   sertifikat: Award,
 }
@@ -91,6 +100,59 @@ function Bar({ value }) {
   return (
     <div className="db-bar">
       <span style={{ width: `${value}%` }} />
+    </div>
+  )
+}
+
+// Kalender bulanan dinamis — hari ini & tanggal jadwal ditandai dot hijau lembut
+function KalenderJadwal({ j, tanggal = [] }) {
+  const [ofs, setOfs] = useState(0)
+  const kini = new Date()
+  const dasar = new Date(kini.getFullYear(), kini.getMonth() + ofs, 1)
+  const jumlahHari = new Date(dasar.getFullYear(), dasar.getMonth() + 1, 0).getDate()
+  const geser = (dasar.getDay() + 6) % 7 // kolom pertama Senin
+  const mulai = j?.tanggalMulai ? new Date(`${j.tanggalMulai}T00:00:00`) : null
+  const akhir = j?.tanggalSelesai ? new Date(`${j.tanggalSelesai}T23:59:59`) : null
+  const setTanggal = new Set(tanggal)
+  const kunciTgl = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const adaSesi = (d) =>
+    setTanggal.has(kunciTgl(d)) ||
+    (jadwalAktif(j) && j.hari.includes(HARI[d.getDay()]) && (!mulai || d >= mulai) && (!akhir || d <= akhir))
+  const hariIni = new Date()
+  hariIni.setHours(0, 0, 0, 0)
+  return (
+    <div className="db-kal">
+      <div className="db-kal-nav">
+        <button type="button" onClick={() => setOfs((o) => o - 1)} aria-label="Bulan sebelumnya">
+          <ChevronLeft size={14} strokeWidth={2} />
+        </button>
+        <b>{dasar.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</b>
+        <button type="button" onClick={() => setOfs((o) => o + 1)} aria-label="Bulan berikutnya">
+          <ChevronRight size={14} strokeWidth={2} />
+        </button>
+      </div>
+      <div className="db-kal-grid">
+        {HARI_URUT.map((h) => (
+          <span key={h} className="db-kal-hari">{h}</span>
+        ))}
+        {Array.from({ length: geser }, (_, i) => (
+          <span key={`k${i}`} aria-hidden="true" />
+        ))}
+        {Array.from({ length: jumlahHari }, (_, i) => {
+          const d = new Date(dasar.getFullYear(), dasar.getMonth(), i + 1)
+          const sesi = adaSesi(d)
+          return (
+            <span
+              key={i}
+              className={`db-kal-tgl${d.getTime() === hariIni.getTime() ? ' is-ini' : ''}${sesi ? ' is-sesi' : ''}`}
+              title={sesi ? (j ? `Sesi · ${j.mulai}–${j.selesai} WIB` : 'Jadwal pembelajaran') : undefined}
+            >
+              {i + 1}
+              {sesi && <i aria-hidden="true" />}
+            </span>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -141,6 +203,14 @@ const unduhInvoice = (r) => {
   a.click()
 }
 
+const IkonMetode = ({ metode }) => {
+  const m = (metode || '').toLowerCase()
+  if (m.includes('qris') || m.includes('qr')) return <QrCode size={13} strokeWidth={1.9} />
+  if (m.includes('transfer') || m.includes('bank') || m.includes('va')) return <Landmark size={13} strokeWidth={1.9} />
+  if (m.includes('wallet') || m.includes('gopay') || m.includes('ovo') || m.includes('dana') || m.includes('shopee')) return <Wallet size={13} strokeWidth={1.9} />
+  return <CreditCard size={13} strokeWidth={1.9} />
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [tab, setTab] = useState(() => {
@@ -154,10 +224,16 @@ export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [collapsed, setCollapsed] = useState(false)
   const [openPop, setOpenPop] = useState(null)
-  const [notifTampil, setNotifTampil] = useState(false)
+  const [navMenu, setNavMenu] = useState(false)
+  const [editProfil, setEditProfil] = useState(false)
   const [programApi, setProgramApi] = useState([])
   const [versi, setVersi] = useState(0)
   const [nilaiBaca, setNilaiBaca] = useState([])
+
+  // segarkan foto asli guru dari database lalu render ulang
+  useEffect(() => {
+    muatFotoGuru().then(() => setVersi((v) => v + 1))
+  }, [])
 
   useEffect(() => {
     if (!user?.email) return
@@ -185,14 +261,44 @@ export default function Dashboard() {
         return
       }
       setUser({ telepon: '', kota: '', ...akun })
+      // segarkan profil dari database agar isian tersimpan lintas perangkat
+      api('/auth/me')
+        .then((segar) => {
+          setUser((u) => ({ ...u, ...segar }))
+          try {
+            const raw = JSON.parse(localStorage.getItem('hifzUser') || '{}')
+            localStorage.setItem('hifzUser', JSON.stringify({ ...raw, ...segar }))
+          } catch {
+            // penyimpanan lokal tidak tersedia
+          }
+        })
+        .catch(() => {})
     } catch {
       navigate('/masuk', { replace: true })
     }
   }, [navigate])
 
   const [profilForm, setProfilForm] = useState(null)
-  const [profilStatus, setProfilStatus] = useState('')
   const [notifBayar, setNotifBayar] = useState([])
+  const [pwForm, setPwForm] = useState(null)
+  const [konsulProgramId, setKonsulProgramId] = useState('')
+
+  // toast animasi untuk semua pesan sukses/gagal
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
+  const tampilkanToast = (pesan, jenis = 'sukses') => {
+    clearTimeout(toastTimer.current)
+    setToast({ id: Date.now(), pesan, jenis })
+    toastTimer.current = setTimeout(() => setToast(null), 3200)
+  }
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
+  // profil wajib lengkap (nomor WhatsApp & alamat) sebelum menu lain dibuka
+  const profilWajib = Boolean(user && (!user.telepon?.trim() || !user.alamat?.trim()))
+  const bolehEdit = editProfil || profilWajib
+  useEffect(() => {
+    if (profilWajib && tab !== 'profil') setTab('profil')
+  }, [profilWajib, tab])
 
   // sinkron status pesanan dengan server; buka akses program saat admin konfirmasi Lunas
   useEffect(() => {
@@ -259,11 +365,67 @@ export default function Dashboard() {
     }
     sinkron()
     const timer = setInterval(sinkron, 15000)
+    // penilaian/absensi guru dari tab lain langsung tampil (event storage lintas tab)
+    const onStorage = (e) => {
+      if (e.key && e.key.startsWith('hifz')) setVersi((v) => v + 1)
+    }
+    const onFokus = () => setVersi((v) => v + 1)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', onFokus)
     return () => {
       hidup = false
       clearInterval(timer)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', onFokus)
     }
   }, [user?.email])
+
+  // realtime Supabase: nilai/absensi dari guru langsung masuk lintas perangkat
+  useEffect(() => sinkronBelajar(() => setVersi((v) => v + 1)), [])
+
+  // notif ke peserta begitu guru memberi penilaian baru
+  useEffect(() => {
+    if (!user?.email || programApi.length === 0) return
+    try {
+      const dilihat = JSON.parse(localStorage.getItem('hifzNilaiDilihat') || '{}')
+      const pertama = !dilihat[user.email]
+      const punya = dilihat[user.email] ?? {}
+      const notifBaru = []
+      for (const p of programApi) {
+        if (!sudahIkut(user.email, p.id)) continue
+        const nilaiMap = bacaPenilaian(user.email, p.id)
+        const subs = (p.kurikulum ?? []).flatMap((t) => (t.sub ?? []).filter((s) => s.status === 'terbit'))
+        const dinilai = subs.filter((s) => {
+          const raw = nilaiMap[s.id]
+          return (typeof raw === 'number' ? raw : raw?.love ?? 0) > 0
+        })
+        if (!pertama) {
+          const lama = new Set(punya[p.id] ?? [])
+          for (const s of dinilai.filter((x) => !lama.has(x.id))) {
+            notifBaru.push({
+              id: `nilai-${p.id}-${s.id}`,
+              judul: `Guru telah menilai "${s.judul}" di ${p.nama}. Anda kini bisa menandai materi selesai.`,
+              waktu: new Date().toISOString(),
+              tab: 'program',
+              baru: true,
+            })
+          }
+        }
+        punya[p.id] = dinilai.map((s) => s.id)
+      }
+      dilihat[user.email] = punya
+      localStorage.setItem('hifzNilaiDilihat', JSON.stringify(dilihat))
+      if (notifBaru.length) {
+        const simpan = JSON.parse(localStorage.getItem('hifzNotifBayar') || '{}')
+        const lama = simpan[user.email] || []
+        simpan[user.email] = [...notifBaru.filter((n) => !lama.some((l) => l.id === n.id)), ...lama]
+        localStorage.setItem('hifzNotifBayar', JSON.stringify(simpan))
+        setNotifBayar(simpan[user.email])
+      }
+    } catch {
+      // penyimpanan lokal tidak tersedia
+    }
+  }, [user?.email, programApi, versi])
 
   const tandaiBayarBaca = () => {
     if (!notifBayar.some((n) => n.baru)) return
@@ -278,7 +440,6 @@ export default function Dashboard() {
     }
   }
   const [wilayah, setWilayah] = useState({ provinsi: [], kota: [], kecamatan: [], kelurahan: [] })
-  const [lokasiStatus, setLokasiStatus] = useState('')
 
   useEffect(() => {
     fetch(`${API_WILAYAH}/provinces.json`)
@@ -289,11 +450,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    let detail = {}
-    try {
-      detail = JSON.parse(localStorage.getItem(KUNCI_PROFIL_DETAIL) || '{}')[user.email] || {}
-    } catch {
-      detail = {}
+    let detail = user.alamatDetail || {}
+    if (!detail.provinsi) {
+      try {
+        detail = JSON.parse(localStorage.getItem(KUNCI_PROFIL_DETAIL) || '{}')[user.email] || {}
+      } catch {
+        detail = {}
+      }
     }
     const kosong = { id: '', nama: '' }
     setProfilForm({
@@ -305,8 +468,6 @@ export default function Dashboard() {
       kecamatan: detail.kecamatan || kosong,
       kelurahan: detail.kelurahan || kosong,
       kodePos: detail.kodePos || '',
-      lat: detail.lat || '',
-      lng: detail.lng || '',
     })
     const sumber = {
       kota: detail.provinsi?.id && `regencies/${detail.provinsi.id}`,
@@ -320,7 +481,7 @@ export default function Dashboard() {
         .then((d) => setWilayah((w) => ({ ...w, [tujuan]: d })))
         .catch(() => {})
     })
-  }, [user?.email])
+  }, [user?.email, user?.alamatDetail])
 
   const pilihWilayah = (tingkat, e) => {
     const opt = e.target.selectedOptions[0]
@@ -347,27 +508,10 @@ export default function Dashboard() {
       .catch(() => {})
   }
 
-  const ambilLokasi = () => {
-    if (!navigator.geolocation) {
-      setLokasiStatus('Peramban tidak mendukung geolokasi.')
-      return
-    }
-    setLokasiStatus('Mengambil lokasi...')
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setProfilForm((f) => ({ ...f, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }))
-        setLokasiStatus('Koordinat berhasil diisi.')
-      },
-      () => setLokasiStatus('Izin lokasi ditolak. Silakan isi koordinat secara manual.'),
-      { enableHighAccuracy: true, timeout: 10000 }
-    )
-  }
-
   const gantiFoto = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    setProfilStatus('')
     try {
       const foto = await kompresFoto(file)
       await api('/users/me/foto', { method: 'PATCH', body: { foto } })
@@ -378,16 +522,15 @@ export default function Dashboard() {
       } catch {
         // penyimpanan lokal tidak tersedia
       }
-      setProfilStatus('Foto profil diperbarui.')
+      tampilkanToast('Foto profil diperbarui.')
     } catch (err) {
-      setProfilStatus(`Gagal mengunggah foto: ${err.message}`)
+      tampilkanToast(`Gagal mengunggah foto: ${err.message}`, 'gagal')
     }
   }
 
   const simpanProfil = async (e) => {
     e.preventDefault()
     if (!profilForm) return
-    setProfilStatus('')
     const alamat = [
       profilForm.jalan.trim(),
       profilForm.kelurahan.nama,
@@ -396,6 +539,14 @@ export default function Dashboard() {
       profilForm.provinsi.nama,
       profilForm.kodePos.trim(),
     ].filter(Boolean).join(', ')
+    const alamatDetail = {
+      jalan: profilForm.jalan.trim(),
+      provinsi: profilForm.provinsi,
+      kota: profilForm.kota,
+      kecamatan: profilForm.kecamatan,
+      kelurahan: profilForm.kelurahan,
+      kodePos: profilForm.kodePos.trim(),
+    }
     try {
       const hasil = await api('/users/me', {
         method: 'PATCH',
@@ -403,31 +554,43 @@ export default function Dashboard() {
           nama: profilForm.nama.trim(),
           telepon: profilForm.telepon.trim(),
           alamat,
+          alamatDetail,
         },
       })
-      const baru = { ...user, nama: hasil.nama, telepon: hasil.telepon ?? '', alamat: hasil.alamat ?? '' }
+      const baru = { ...user, nama: hasil.nama, telepon: hasil.telepon ?? '', alamat: hasil.alamat ?? '', alamatDetail: hasil.alamatDetail ?? alamatDetail }
       setUser(baru)
       try {
         const raw = JSON.parse(localStorage.getItem('hifzUser') || '{}')
-        localStorage.setItem('hifzUser', JSON.stringify({ ...raw, nama: baru.nama, telepon: baru.telepon, alamat: baru.alamat }))
+        localStorage.setItem('hifzUser', JSON.stringify({ ...raw, nama: baru.nama, telepon: baru.telepon, alamat: baru.alamat, alamatDetail: baru.alamatDetail }))
         const semua = JSON.parse(localStorage.getItem(KUNCI_PROFIL_DETAIL) || '{}')
-        semua[user.email] = {
-          jalan: profilForm.jalan.trim(),
-          provinsi: profilForm.provinsi,
-          kota: profilForm.kota,
-          kecamatan: profilForm.kecamatan,
-          kelurahan: profilForm.kelurahan,
-          kodePos: profilForm.kodePos.trim(),
-          lat: profilForm.lat,
-          lng: profilForm.lng,
-        }
+        semua[user.email] = alamatDetail
         localStorage.setItem(KUNCI_PROFIL_DETAIL, JSON.stringify(semua))
       } catch {
         // penyimpanan lokal tidak tersedia
       }
-      setProfilStatus('Perubahan tersimpan.')
+      tampilkanToast('Perubahan berhasil disimpan.')
+      setEditProfil(false)
     } catch (err) {
-      setProfilStatus(`Gagal menyimpan: ${err.message}`)
+      tampilkanToast(`Gagal menyimpan: ${err.message}`, 'gagal')
+    }
+  }
+
+  const gantiPassword = async (e) => {
+    e.preventDefault()
+    if (pwForm.baru.length < 6) {
+      tampilkanToast('Kata sandi minimal 6 karakter.', 'gagal')
+      return
+    }
+    if (pwForm.baru !== pwForm.ulang) {
+      tampilkanToast('Konfirmasi kata sandi tidak sama.', 'gagal')
+      return
+    }
+    try {
+      await api('/users/me', { method: 'PATCH', body: { password: pwForm.baru } })
+      setPwForm(null)
+      tampilkanToast('Kata sandi berhasil diperbarui.')
+    } catch (err) {
+      tampilkanToast(`Gagal memperbarui kata sandi: ${err.message}`, 'gagal')
     }
   }
 
@@ -525,8 +688,9 @@ export default function Dashboard() {
                   id: s.id,
                   tipe: s.jenis === 'kuis' ? 'tugas' : 'sesi',
                   judul: s.judul,
-                  tenggat: '',
+                  tenggat: `${tanggalSub(s.jadwal)} · ${jamSub(s.jadwal)}`,
                   durasi: Number(s.durasi) > 0 ? `${s.durasi} menit` : '45 menit',
+                  pengajar: s.pengajar || '',
                   lanjutan: true,
                   tautan: '',
                   aksi: 'Buka materi',
@@ -594,7 +758,7 @@ export default function Dashboard() {
       else if (a.status === 'habis')
         daftar.push({ id: `akses-${p.id}`, judul: `Masa akses ${p.nama} telah berakhir. Lakukan perpanjangan untuk melanjutkan pembelajaran.`, waktu: a.berakhir.toISOString(), baru: true, tab: 'program' })
       else if (a.status === 'tunggu' && a.tunggu)
-        daftar.push({ id: `akses-${p.id}`, judul: `Perpanjangan ${p.nama} (${a.tunggu.invoice}) sedang menunggu konfirmasi admin. Akses belajar tetap terbuka.`, waktu: a.tunggu.createdAt || a.tunggu.tanggal, baru: false, tab: 'riwayat' })
+        daftar.push({ id: `akses-${p.id}`, judul: `Perpanjangan ${p.nama} (${a.tunggu.invoice}) menunggu konfirmasi.`, waktu: a.tunggu.createdAt || a.tunggu.tanggal, baru: false, tab: 'riwayat' })
     }
     return daftar
   }, [programApi, aksesProgram])
@@ -671,7 +835,7 @@ export default function Dashboard() {
       t.buktiBayar || t.atasNama
         ? {
             id: t.invoice,
-            judul: `Pembayaran ${t.invoice} (${t.item}) sedang menunggu konfirmasi admin.${(t.jenis ?? 'toko') === 'program' ? ' Pelajaran terbuka setelah pembayaran dikonfirmasi lunas.' : ''}`,
+            judul: `Pembayaran ${t.invoice} (${t.item}) menunggu konfirmasi.`,
             waktu: t.buktiWaktu || t.createdAt || t.tanggal,
             baru: true,
             tab: 'riwayat',
@@ -766,7 +930,7 @@ export default function Dashboard() {
             type="button"
             title="Profil"
             className={`db-nav-profil${tab === 'profil' ? ' active' : ''}`}
-            onClick={() => setTab('profil')}
+            onClick={() => setNavMenu((v) => !v)}
           >
             {user.foto
               ? <img className="db-nav-foto" src={user.foto} alt="" />
@@ -788,6 +952,17 @@ export default function Dashboard() {
           ))}
         </nav>
 
+        {navMenu && (
+          <div className="db-nav-pop">
+            <button type="button" onClick={() => { setTab('profil'); setNavMenu(false) }}>
+              <UserRound size={15} strokeWidth={1.9} /> Profil
+            </button>
+            <button type="button" className="is-keluar" onClick={keluar}>
+              <LogOut size={15} strokeWidth={1.9} /> Keluar
+            </button>
+          </div>
+        )}
+
         <div className="db-side-foot">
           <button type="button" className="db-logout" title="Keluar" onClick={keluar}>
             <LogOut size={16} strokeWidth={1.9} />
@@ -805,11 +980,11 @@ export default function Dashboard() {
             </Link>
             <div>
               <h1>
-                {tab === 'ringkasan' && <>Ahlan, <em>{user.nama.split(' ')[0]}</em>!</>}
+                {tab === 'ringkasan' && <>Selamat datang, <em>{user.nama.split(' ')[0]}</em></>}
                 {tab === 'program' && (programTerpilih?.nama ?? 'Program')}
                 {tab === 'riwayat' && 'Riwayat Pembelian'}
                 {tab === 'enroll' && 'Enroll Program'}
-                {tab === 'rapot' && 'Rapot Penilaian'}
+                {tab === 'rapot' && 'Rapor Penilaian'}
                 {tab === 'konsultasi' && 'Konsultasi'}
                 {tab === 'profil' && 'Profil Saya'}
               </h1>
@@ -818,10 +993,66 @@ export default function Dashboard() {
           <div className="db-top-actions">
             {openPop && <button type="button" className="db-pop-overlay" aria-label="Tutup" onClick={() => setOpenPop(null)} />}
 
-            <Link className="db-bell" to="/keranjang" aria-label="Keranjang">
-              <ShoppingCart size={18} strokeWidth={1.9} />
-              {jmlKeranjang > 0 && <i>{jmlKeranjang}</i>}
-            </Link>
+            <a
+              className="db-bell"
+              href="https://wa.me/6285210447200?text=Assalamu%27alaikum%2C%20saya%20membutuhkan%20bantuan."
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Hubungi CS"
+              title="Hubungi CS"
+            >
+              <Headphones size={18} strokeWidth={1.9} />
+            </a>
+
+            <div className="db-pop">
+              <button
+                type="button"
+                className="db-bell"
+                aria-label="Keranjang"
+                onClick={() => setOpenPop((v) => (v === 'keranjang' ? null : 'keranjang'))}
+              >
+                <ShoppingCart size={18} strokeWidth={1.9} />
+                {jmlKeranjang > 0 && <i>{jmlKeranjang}</i>}
+              </button>
+              {openPop === 'keranjang' && (() => {
+                let isi = []
+                try { isi = JSON.parse(localStorage.getItem('hifzKeranjang') || '[]') } catch { isi = [] }
+                const totalKrj = isi.reduce((t, b) => t + (b.harga || 0) * (b.jumlah || 0), 0)
+                return (
+                  <div className="db-pop-menu db-pop-menu--notif db-pop-menu--krj">
+                    <header>
+                      <h5>Keranjang</h5>
+                      <span>{isi.length} item</span>
+                    </header>
+                    <ul>
+                      {isi.length === 0 && (
+                        <li>
+                          <p>Keranjang masih kosong.</p>
+                        </li>
+                      )}
+                      {isi.map((b) => (
+                        <li key={b.id} className="db-krj-item">
+                          {b.gambar
+                            ? <img src={b.gambar} alt="" loading="lazy" />
+                            : <span className="db-krj-img"><ShoppingCart size={14} strokeWidth={1.8} /></span>}
+                          <div>
+                            <p>{b.nama}</p>
+                            <span>{b.jumlah} × {formatRupiah(b.harga)}</span>
+                          </div>
+                          <b>{formatRupiah((b.harga || 0) * (b.jumlah || 0))}</b>
+                        </li>
+                      ))}
+                    </ul>
+                    <footer className="db-krj-foot">
+                      <span>Total <b>{formatRupiah(totalKrj)}</b></span>
+                      <Link className="db-btn db-btn--sm" to="/keranjang" onClick={() => setOpenPop(null)}>
+                        Buka
+                      </Link>
+                    </footer>
+                  </div>
+                )
+              })()}
+            </div>
 
             <div className="db-pop">
               <button
@@ -930,35 +1161,35 @@ export default function Dashboard() {
               <div className="db-page">
                 <div className="db-statbar">
                   <div className="db-statcell">
-                    <span className="db-stat-ic"><GraduationCap size={17} strokeWidth={1.9} /></span>
+                    <span className="db-stat-ic"><Rocket size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{aktif.length}</strong>
-                      <p>Program berjalan</p>
-                      <em>{selesai.length} program selesai</em>
+                      <p>Program Berjalan</p>
+                      <em>{selesai.length} selesai</em>
                     </div>
                   </div>
                   <div className="db-statcell">
-                    <span className="db-stat-ic"><BookOpenCheck size={17} strokeWidth={1.9} /></span>
+                    <span className="db-stat-ic"><Target size={17} strokeWidth={1.9} /></span>
                     <div>
-                      <strong>{totalSelesai}</strong>
-                      <p>Modul diselesaikan</p>
-                      <em>dari {totalModul} modul total</em>
+                      <strong>{totalSelesai}<small>/{totalModul}</small></strong>
+                      <p>Modul Selesai</p>
+                      <em>{rataProgres}% progres</em>
                     </div>
                   </div>
                   <div className="db-statcell">
-                    <span className="db-stat-ic"><UserCheck size={17} strokeWidth={1.9} /></span>
+                    <span className="db-stat-ic"><Activity size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{totalSesi > 0 ? `${kehadiranPct}%` : '–'}</strong>
-                      <p>Kehadiran sesi</p>
-                      <em>{totalSesi > 0 ? `${totalHadir} hadir dari ${totalSesi} sesi` : 'belum ada sesi tercatat'}</em>
+                      <p>Kehadiran</p>
+                      <em>{totalHadir}/{totalSesi} sesi</em>
                     </div>
                   </div>
                   <div className="db-statcell">
-                    <span className="db-stat-ic db-stat-ic--gold"><ReceiptText size={17} strokeWidth={1.9} /></span>
+                    <span className="db-stat-ic db-stat-ic--gold"><Wallet size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{tagihanTunggu.length}</strong>
-                      <p>Tagihan menunggu</p>
-                      <em>{tagihanTunggu.length > 0 ? `senilai ${formatRupiah(nominalTagihan)}` : 'semua lunas'}</em>
+                      <p>Tagihan</p>
+                      <em>{tagihanTunggu.length > 0 ? formatRupiah(nominalTagihan) : 'Lunas'}</em>
                     </div>
                   </div>
                 </div>
@@ -983,9 +1214,11 @@ export default function Dashboard() {
                           </div>
                           <Bar value={unggulan.progres} />
                           <div className="db-continue-foot">
-                            <span className="db-jadwal">
-                              <CalendarClock size={14} strokeWidth={1.9} /> {unggulan.sesiBerikut ? `Sesi berikutnya ${unggulan.sesiBerikut}` : 'Belajar mandiri'}
-                            </span>
+                            {unggulan.sesiBerikut && (
+                              <span className="db-jadwal">
+                                <CalendarClock size={14} strokeWidth={1.9} /> Sesi berikutnya {unggulan.sesiBerikut}
+                              </span>
+                            )}
                             <button type="button" className="db-btn db-btn--lg" onClick={() => bukaProgram(unggulan.id)}>
                               Lanjutkan <ArrowUpRight size={15} strokeWidth={2} />
                             </button>
@@ -996,7 +1229,7 @@ export default function Dashboard() {
 
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4>Analitik program</h4>
+                        <h4>Analitik Program</h4>
                         <span className="db-block-sub">{programSaya.length} program diikuti</span>
                       </header>
                       <div className="db-ana-list db-gulir">
@@ -1006,6 +1239,8 @@ export default function Dashboard() {
                           const sesiProg = p.kehadiran.hadir + p.kehadiran.absen
                           const hadirPct = sesiProg > 0 ? Math.round((p.kehadiran.hadir / sesiProg) * 100) : 0
                           const nilaiPct = rapot && rapot.dinilai > 0 ? Math.round((rapot.rerata / 5) * 100) : 0
+                          const titikTotal = Math.min(sesiProg, 10)
+                          const titikHadir = sesiProg > 0 ? Math.round((p.kehadiran.hadir / sesiProg) * titikTotal) : 0
                           return (
                             <article
                               key={p.id}
@@ -1028,24 +1263,38 @@ export default function Dashboard() {
                                 </em>
                               </div>
                               <div className="db-ana-metrik">
-                                <div>
-                                  <span>Progres modul</span>
-                                  <Bar value={p.progres} />
-                                  <b>{p.modulSelesai}/{p.totalModul} · {p.progres}%</b>
+                                <div className="db-ana-m">
+                                  <span
+                                    className="db-ana-donut"
+                                    role="img"
+                                    aria-label={`Progres modul ${p.progres} persen`}
+                                    style={{ background: `conic-gradient(var(--green, #92c841) ${p.progres * 3.6}deg, #edf2e4 0)` }}
+                                  >
+                                    <b>{p.progres}%</b>
+                                  </span>
+                                  <small>Progres modul</small>
+                                  <b>{p.modulSelesai}/{p.totalModul} modul</b>
                                 </div>
-                                <div>
-                                  <span>Kehadiran</span>
-                                  <Bar value={hadirPct} />
-                                  <b>{sesiProg > 0 ? `${p.kehadiran.hadir}/${sesiProg} · ${hadirPct}%` : 'belum ada sesi'}</b>
+                                <div className="db-ana-m">
+                                  <span className="db-ana-dots" role="img" aria-label={sesiProg > 0 ? `Hadir ${p.kehadiran.hadir} dari ${sesiProg} sesi` : 'Belum ada sesi'}>
+                                    {sesiProg > 0
+                                      ? Array.from({ length: titikTotal }, (_, i) => <i key={i} className={i < titikHadir ? 'is-hadir' : ''} />)
+                                      : <em>—</em>}
+                                  </span>
+                                  <small>Kehadiran</small>
+                                  <b>{sesiProg > 0 ? `${p.kehadiran.hadir}/${sesiProg} sesi · ${hadirPct}%` : 'belum ada sesi'}</b>
                                 </div>
-                                <div>
-                                  <span>Nilai guru</span>
-                                  <Bar value={nilaiPct} />
+                                <div className="db-ana-m">
+                                  <span className="db-ana-bintang" role="img" aria-label={rapot && rapot.dinilai > 0 ? `Nilai ${rapot.rerata} dari 5` : 'Belum dinilai'}>
+                                    <i aria-hidden="true">★★★★★</i>
+                                    <i className="is-isi" aria-hidden="true" style={{ width: `${nilaiPct}%` }}>★★★★★</i>
+                                  </span>
+                                  <small>Nilai guru</small>
                                   <b>{rapot && rapot.dinilai > 0 ? `${rapot.rerata}/5 · ${rapot.dinilai} dinilai` : 'belum dinilai'}</b>
                                 </div>
                               </div>
                               <footer className="db-ana-foot">
-                                <span><CalendarClock size={12} strokeWidth={1.9} /> {p.sesiBerikut ? `Sesi berikutnya ${p.sesiBerikut}` : 'Belajar mandiri'}</span>
+                                {p.sesiBerikut && <span><CalendarClock size={12} strokeWidth={1.9} /> Sesi berikutnya {p.sesiBerikut}</span>}
                                 <span><PlayCircle size={12} strokeWidth={1.9} /> {p.materiBerikut}</span>
                               </footer>
                             </article>
@@ -1057,7 +1306,7 @@ export default function Dashboard() {
 
                   <aside className="db-col-side">
                     <section className="db-block db-ring-card">
-                      <header className="db-block-head"><h4>Progres keseluruhan</h4></header>
+                      <header className="db-block-head"><h4>Progres Keseluruhan</h4></header>
                       <div className="db-donut-wrap">
                         <div
                           className="db-donut"
@@ -1081,7 +1330,7 @@ export default function Dashboard() {
 
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4>Tenggat terdekat</h4>
+                        <h4>Tenggat Terdekat</h4>
                         <span className="db-block-sub">{agendaSemua.length} agenda</span>
                       </header>
                       <ul className="db-tenggat db-gulir">
@@ -1133,18 +1382,18 @@ export default function Dashboard() {
                     })()}
 
                     <section className="db-block">
-                      <header className="db-block-head"><h4>Aktivitas terbaru</h4></header>
+                      <header className="db-block-head"><h4>Aktivitas Terbaru</h4></header>
                       <ul className="db-activity db-gulir">
                         {aktivitasTerbaru.length === 0 && (
                           <li>
-                            <span className="db-act-ic"><Sparkles size={15} strokeWidth={1.9} /></span>
+                            <span className="db-act-ic"><Info size={15} strokeWidth={1.9} /></span>
                             <div>
                               <p>Belum ada aktivitas.</p>
                             </div>
                           </li>
                         )}
                         {aktivitasTerbaru.map((a) => {
-                          const Icon = ikonAktivitas[a.tipe] ?? Sparkles
+                          const Icon = ikonAktivitas[a.tipe] ?? Info
                           return (
                             <li key={a.id}>
                               <span className="db-act-ic"><Icon size={15} strokeWidth={1.9} /></span>
@@ -1168,18 +1417,22 @@ export default function Dashboard() {
               <div className="db-page">
                 <div className="db-kelas-atas">
                   <div>
-                    <h4>Kelas saya</h4>
+                    <h4>Kelas Saya</h4>
                     <p className="db-kelas-mini">
-                      <span title="Kelas berjalan"><PlayCircle size={13} strokeWidth={2} /> {aktif.length}</span>
-                      <span title="Kelas selesai"><BadgeCheck size={13} strokeWidth={2} /> {selesai.length}</span>
+                      <span><PlayCircle size={13} strokeWidth={2} /> {aktif.length} berjalan</span>
+                      <span><BadgeCheck size={13} strokeWidth={2} /> {selesai.length} selesai</span>
                     </p>
                   </div>
                   <button type="button" className="db-btn db-btn--sm" onClick={() => navigate('/program')}>
-                    Jelajahi program <ArrowUpRight size={14} strokeWidth={2} />
+                    Jelajahi Program <ArrowUpRight size={14} strokeWidth={2} />
                   </button>
                 </div>
                 {programSaya.length === 0 && (
-                  <p className="db-kosong">Belum ada kelas yang diikuti.</p>
+                  <div className="db-kelas-kosong">
+                    <span className="db-kelas-kosong-ic"><GraduationCap size={22} strokeWidth={1.7} /></span>
+                    <p>Belum ada kelas yang diikuti.</p>
+                    <span>Pilih program yang sesuai untuk mulai belajar.</span>
+                  </div>
                 )}
                 <div className="db-kelas-grid">
                   {programSaya.map((p) => (
@@ -1238,6 +1491,27 @@ export default function Dashboard() {
               const j = praw ? jadwalUser(user.email, praw) : null
               const ingat = pengingatAktif(user.email, programTerpilih.id)
               const subDaftar = (praw?.kurikulum ?? []).flatMap((t) => (t.sub ?? []).filter((s) => s.status === 'terbit'))
+              // fallback sinkron kalender dari jadwal sub terdekat bila program tanpa jadwal mingguan
+              const jSync = j ?? (() => {
+                const d = subDaftar
+                  .filter((s) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s.jadwal ?? ''))
+                  .map((s) => ({ d: new Date(s.jadwal), durasi: Number(s.durasi) > 0 ? Number(s.durasi) : 45 }))
+                  .filter((x) => x.d.getTime() > Date.now())
+                  .sort((a, b) => a.d - b.d)[0]
+                if (!d) return null
+                const dua = (n) => String(n).padStart(2, '0')
+                const tgl = `${d.d.getFullYear()}-${dua(d.d.getMonth() + 1)}-${dua(d.d.getDate())}`
+                const akhir = new Date(d.d.getTime() + d.durasi * 60000)
+                return {
+                  id: 'sub',
+                  label: 'Jadwal materi',
+                  hari: [HARI[d.d.getDay()]],
+                  mulai: `${dua(d.d.getHours())}:${dua(d.d.getMinutes())}`,
+                  selesai: `${dua(akhir.getHours())}:${dua(akhir.getMinutes())}`,
+                  tanggalMulai: tgl,
+                  tanggalSelesai: tgl,
+                }
+              })()
               const idxJalan = subDaftar.findIndex((s) => !(data.selesai ?? []).includes(s.id))
               const statusSub = (id) => {
                 if ((data.selesai ?? []).includes(id)) return 'selesai'
@@ -1250,9 +1524,6 @@ export default function Dashboard() {
               const akses = aksesProgram.get(programTerpilih.id)
               return (
               <div className="db-page">
-                <button type="button" className="db-btn db-btn--sm db-btn--ghost db-kembali" onClick={() => setProgramId(null)}>
-                  <ArrowLeft size={14} strokeWidth={2} /> Semua kelas
-                </button>
                 <div className="db-prog">
                   <div className="db-prog-main">
                     <section className="db-kelas-stats">
@@ -1314,37 +1585,34 @@ export default function Dashboard() {
                           const stop = programTerpilih.agenda.findIndex((a, i) => i > 0 && !a.lanjutan)
                           const grup = stop > 0 ? programTerpilih.agenda.slice(0, stop) : programTerpilih.agenda
                           const induk = grup[0]
-                          const subs = grup.slice(1)
+                          const materi = grup.slice(1).filter((a) => a.tipe !== 'tugas')
                           if (!induk) return <p className="db-agenda-kosong">Belum ada agenda terdekat.</p>
                           return (
-                            <div className="db-agenda-card">
+                            <div className="db-agi">
                               <header>
-                                <span className="db-agenda-ic is-sesi"><Video size={15} strokeWidth={1.9} /></span>
-                                <div className="db-agenda-isi">
+                                <span className="db-agi-ic"><BellRing size={15} strokeWidth={1.9} /></span>
+                                <div>
                                   <strong>{induk.judul}</strong>
-                                  <span>{['Sesi Live', induk.tenggat, induk.durasi].filter(Boolean).join(' · ')}</span>
                                 </div>
-                                {induk.tautan ? (
-                                  <a className="db-btn db-btn--sm" href={induk.tautan} target="_blank" rel="noreferrer">
-                                    <Video size={13} strokeWidth={2} /> {induk.aksi}
-                                  </a>
-                                ) : (
-                                  <button type="button" className="db-btn db-btn--sm db-btn--ghost" onClick={() => induk.id && setBukaSub(induk.id)}>{induk.aksi}</button>
-                                )}
                               </header>
-                              {subs.length > 0 && (
+                              {materi.length > 0 && (
                                 <ul>
-                                  {subs.map((a, i) => (
-                                    <li key={`${i}-${a.judul}`}>
-                                      <span className={`db-agenda-ic is-${a.tipe}`}>
-                                        {a.tipe === 'sesi' ? <Video size={15} strokeWidth={1.9} /> : <ClipboardList size={15} strokeWidth={1.9} />}
-                                      </span>
-                                      <div className="db-agenda-isi">
-                                        <strong>{a.judul}</strong>
-                                        <span>{[a.tipe === 'sesi' ? 'Sesi Live' : 'Tugas', a.tenggat, a.durasi].filter(Boolean).join(' · ')}</span>
-                                      </div>
-                                    </li>
-                                  ))}
+                                  {materi.map((a, i) => {
+                                    const guru = a.pengajar || programTerpilih.tutor
+                                    return (
+                                      <li key={`${i}-${a.judul}`}>
+                                        <i className="db-agi-no">{i + 1}</i>
+                                        <div className="db-agi-isi">
+                                          <strong>{a.judul}</strong>
+                                          <span>{[a.tenggat, a.durasi].filter(Boolean).join(' · ')}</span>
+                                        </div>
+                                        <span className="db-agi-guru" title={guru}>
+                                          <img src={avatarGuru(guru)} alt="" loading="lazy" />
+                                          {guru}
+                                        </span>
+                                      </li>
+                                    )
+                                  })}
                                 </ul>
                               )}
                             </div>
@@ -1368,6 +1636,17 @@ export default function Dashboard() {
                         )}
                         <button type="button" className="db-btn db-btn--sm">
                           <Download size={14} strokeWidth={2} /> Sertifikat
+                        </button>
+                        <button
+                          type="button"
+                          className="db-btn db-btn--sm"
+                          onClick={() => {
+                            setKonsulProgramId(programTerpilih.id)
+                            setProgramTerpilih(null)
+                            setTab('konsultasi')
+                          }}
+                        >
+                          <MessagesSquare size={14} strokeWidth={2} /> Konsultasi
                         </button>
                       </section>
                       )
@@ -1452,25 +1731,41 @@ export default function Dashboard() {
                                           </div>
                                         )}
                                         <div className="db-cek-aksi">
-                                          <span className="db-cek-file"><GraduationCap size={13} strokeWidth={2} /> {m.pengajar || programTerpilih.tutor}</span>
+                                          <span className="db-cek-file db-cek-guru">
+                                            <img src={avatarGuru(m.pengajar || programTerpilih.tutor)} alt="" /> {m.pengajar || programTerpilih.tutor}
+                                          </span>
                                           {m.konten && m.jenis !== 'video' && <span className="db-cek-file"><Paperclip size={13} strokeWidth={2} /> {m.konten}</span>}
                                         </div>
                                         <div className="db-cek-lapor">
                                           <div className="db-cek-lapor-head">
-                                            <ClipboardList size={14} strokeWidth={1.9} />
                                             <strong>Penilaian</strong>
-                                            <span className="db-love" role="img" aria-label={`${love} dari 5`}>
+                                            <span className="db-love db-love--bintang" role="img" aria-label={`${love} dari 5`}>
                                               {[1, 2, 3, 4, 5].map((n) => (
-                                                <Heart key={n} size={15} strokeWidth={1.9} className={n <= love ? 'is-isi' : ''} />
+                                                <Star key={n} size={15} strokeWidth={1.9} className={n <= love ? 'is-isi' : ''} />
                                               ))}
                                             </span>
+                                            {love > 0 && <b className="db-cek-lapor-skor">{love}/5</b>}
                                           </div>
                                           {komentarGuru && <p className="db-cek-komentar">{komentarGuru}</p>}
-                                          {st === 'selesai' && (
-                                            <button type="button" className="db-btn db-btn--ghost db-btn--sm" onClick={() => setTab('rapot')}>
-                                              Lihat rapot
+                                          <div className="db-cek-selesai-baris">
+                                            <button
+                                              type="button"
+                                              className={`db-btn db-btn--sm${st === 'selesai' ? '' : ' db-btn--ghost'}`}
+                                              disabled={love === 0 || st === 'selesai'}
+                                              title={love === 0 ? 'Aktif setelah guru memberi penilaian' : undefined}
+                                              onClick={() => {
+                                                tandaiMateri(user.email, programTerpilih.id, m.id, true)
+                                                setVersi((v) => v + 1)
+                                              }}
+                                            >
+                                              <CheckCircle2 size={14} strokeWidth={2} /> {st === 'selesai' ? 'Selesai' : 'Tandai selesai'}
                                             </button>
-                                          )}
+                                            {st === 'selesai' && (
+                                              <button type="button" className="db-btn db-btn--ghost db-btn--sm" onClick={() => setTab('rapot')}>
+                                                Lihat rapor
+                                              </button>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                       )
@@ -1491,36 +1786,15 @@ export default function Dashboard() {
                   <aside className="db-prog-side">
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4>Detail program</h4>
-                        <span className="db-prog-pct">{programTerpilih.progres}%</span>
-                      </header>
-                      <Bar value={programTerpilih.progres} />
-                      <ul className="db-prog-meta">
-                        <li><GraduationCap size={14} strokeWidth={1.9} /> {programTerpilih.tutor}</li>
-                        <li><Timer size={14} strokeWidth={1.9} /> 45 menit/pertemuan</li>
-                        <li><CalendarClock size={14} strokeWidth={1.9} /> {akses?.berakhir ? `Akses hingga ${formatBerakhir(akses.berakhir)}` : 'Akses aktif'}</li>
-                        <li><BadgeCheck size={14} strokeWidth={1.9} /> {programTerpilih.modulSelesai}/{programTerpilih.totalModul} dinilai guru</li>
-                      </ul>
-                      <div className="db-prog-btns">
-                        <button type="button" className="db-btn db-btn--sm" onClick={() => setTab('rapot')}>
-                          <Award size={14} strokeWidth={2} /> Rapot
-                        </button>
-                        <button type="button" className="db-btn db-btn--sm db-btn--ghost">
-                          <MessagesSquare size={14} strokeWidth={2} /> Grup
-                        </button>
-                      </div>
-                    </section>
-
-                    <section className="db-block">
-                      <header className="db-block-head">
                         <h4>Absensi</h4>
+                        <span className="db-absen-chip">{hadir.length}/{subDaftar.length} hadir</span>
                       </header>
                       <div className="db-absen-grid">
                         {subDaftar.map((s, i) => (
                           <span
                             key={s.id}
                             className={`db-absen-dot${hadir.includes(s.id) ? ' is-hadir' : statusSub(s.id) === 'berjalan' ? ' is-jalan' : ''}`}
-                            title={s.judul}
+                            title={`${s.judul}${hadir.includes(s.id) ? ' · hadir (dicatat guru)' : ''}`}
                           >
                             {i + 1}
                           </span>
@@ -1529,40 +1803,79 @@ export default function Dashboard() {
                       {subJalan && hadir.includes(subJalan.id) && (
                         <p className="db-absen-ok"><CheckCircle2 size={14} strokeWidth={2} /> Hadir</p>
                       )}
+                      {(() => {
+                        const dinilaiN = subDaftar.filter((s) => {
+                          const raw = penilaianKelas[s.id]
+                          return (typeof raw === 'number' ? raw : raw?.love ?? 0) > 0
+                        }).length
+                        return dinilaiN > 0 ? (
+                          <p className="db-absen-ok db-absen-ok--nilai"><Star size={13} strokeWidth={2} /> {dinilaiN} dari {subDaftar.length} materi dinilai guru</p>
+                        ) : null
+                      })()}
                     </section>
 
-                    {j && praw && (
-                      <section className="db-block">
-                        <header className="db-block-head"><h4>Sinkron jadwal</h4></header>
-                        {opsiJadwal.length > 1 && (
-                          <label className="db-jadwal-pilihan">
-                            <span>Jadwal</span>
-                            <select
-                              value={j.id}
-                              onChange={(e) => {
-                                pilihJadwal(user.email, praw.id, e.target.value)
-                                setVersi((v) => v + 1)
-                              }}
-                            >
-                              {opsiJadwal.map((o) => (
-                                <option key={o.id} value={o.id}>{o.label} · {ringkasJadwal(o)}</option>
-                              ))}
-                            </select>
-                          </label>
-                        )}
-                        <div className="db-sync-ikon">
-                          <a className="db-td-btn" title="Google Calendar" aria-label="Google Calendar" href={linkGoogleKalender(praw, j)} target="_blank" rel="noreferrer">
-                            <CalendarPlus size={15} strokeWidth={2} />
+                    <section className="db-block">
+                      <header className="db-block-head">
+                        <h4>Kalender</h4>
+                        {jSync && praw && (
+                          <a className="db-td-btn db-kal-google" title="Sinkron ke Google Calendar" aria-label="Google Calendar" href={linkGoogleKalender(praw, jSync)} target="_blank" rel="noreferrer">
+                            <CalendarPlus size={14} strokeWidth={2} />
                           </a>
-                          <button type="button" className="db-td-btn" title="Simpan .ics" aria-label="Simpan .ics" onClick={() => unduhICS(praw, j)}>
-                            <Download size={15} strokeWidth={2} />
-                          </button>
-                          <button type="button" className={`db-td-btn${ingat ? ' is-aktif' : ''}`} title={ingat ? 'Pengingat aktif' : 'Pengingat'} aria-label="Pengingat" onClick={() => togglePengingat(praw)}>
-                            <BellRing size={15} strokeWidth={2} />
-                          </button>
+                        )}
+                      </header>
+                      {j && praw && opsiJadwal.length > 1 && (
+                        <label className="db-jadwal-pilihan">
+                          <span>Jadwal</span>
+                          <select
+                            value={j.id}
+                            onChange={(e) => {
+                              pilihJadwal(user.email, praw.id, e.target.value)
+                              setVersi((v) => v + 1)
+                            }}
+                          >
+                            {opsiJadwal.map((o) => (
+                              <option key={o.id} value={o.id}>{o.label} · {ringkasJadwal(o)}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      <KalenderJadwal
+                        j={j}
+                        tanggal={subDaftar
+                          .filter((s) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s.jadwal ?? ''))
+                          .map((s) => s.jadwal.slice(0, 10))}
+                      />
+                      {(() => {
+                        const dSesi = j ? sesiBerikutnya(j) : null
+                        return dSesi ? (
+                          <p className="db-kal-ingat">
+                            <BellRing size={13} strokeWidth={2} /> Sesi berikutnya {formatTanggalPanjang(dSesi)} · {j.mulai} WIB
+                          </p>
+                        ) : null
+                      })()}
+                    </section>
+
+                    <section className="db-block db-prog-aksi">
+                      <div className="db-prog-aksi-id">
+                        <img src={praw?.gambar || gambarKategori(praw?.kategori)} alt="" />
+                        <div>
+                          <strong>{praw?.nama || programTerpilih.nama}</strong>
+                          <div className="db-prog-tag">
+                            {[praw?.kategori, praw?.jenis].filter(Boolean).map((t) => (
+                              <span key={t}>{t}</span>
+                            ))}
+                          </div>
                         </div>
-                      </section>
-                    )}
+                      </div>
+                      <div className="db-prog-btns db-prog-btns--baris">
+                        <button type="button" className="db-btn db-btn--sm db-btn--ghost">
+                          <MessagesSquare size={14} strokeWidth={2} /> Grup
+                        </button>
+                        <button type="button" className="db-btn db-btn--sm" onClick={() => setTab('rapot')}>
+                          <Award size={14} strokeWidth={2} /> Rapor
+                        </button>
+                      </div>
+                    </section>
                   </aside>
                 </div>
               </div>
@@ -1574,23 +1887,23 @@ export default function Dashboard() {
                 <div className="db-table-card">
                   <div className="db-table-head db-table-head--riwayat">
                     <div className="db-riw-judul">
-                      <h4>Semua transaksi</h4>
+                      <h4>Semua Transaksi</h4>
                       <span>{riwayatTampil.length} transaksi</span>
                     </div>
-                    <div className="db-riw-filter db-riw-filter--ikon" role="tablist" aria-label="Filter riwayat">
-                      <button type="button" className={filterRiwayat === 'semua' ? 'is-active' : ''} title={`Semua (${semuaRiwayat.length})`} aria-label="Semua" onClick={() => setFilterRiwayat('semua')}>
-                        <LayoutGrid size={15} strokeWidth={2} />
+                    <div className="db-riw-filter" role="tablist" aria-label="Filter riwayat">
+                      <button type="button" className={filterRiwayat === 'semua' ? 'is-active' : ''} onClick={() => setFilterRiwayat('semua')}>
+                        Semua <i>{semuaRiwayat.length}</i>
                       </button>
-                      <button type="button" className={filterRiwayat === 'program' ? 'is-active is-program' : ''} title={`Program (${jumlahProgram})`} aria-label="Program" onClick={() => setFilterRiwayat('program')}>
-                        <GraduationCap size={15} strokeWidth={2} />
+                      <button type="button" className={filterRiwayat === 'program' ? 'is-active is-program' : ''} onClick={() => setFilterRiwayat('program')}>
+                        Program <i>{jumlahProgram}</i>
                       </button>
-                      <button type="button" className={filterRiwayat === 'toko' ? 'is-active is-toko' : ''} title={`Toko (${jumlahToko})`} aria-label="Toko" onClick={() => setFilterRiwayat('toko')}>
-                        <ShoppingCart size={15} strokeWidth={2} />
+                      <button type="button" className={filterRiwayat === 'toko' ? 'is-active is-toko' : ''} onClick={() => setFilterRiwayat('toko')}>
+                        Toko <i>{jumlahToko}</i>
                       </button>
                     </div>
                   </div>
                   <div className="db-table-scroll">
-                    <table className="db-table">
+                    <table className="db-table db-table--riwayat">
                       <thead>
                         <tr>
                           <th>Invoice</th>
@@ -1629,7 +1942,7 @@ export default function Dashboard() {
                             <td className="db-td-item">
                               <strong>{r.item}</strong>
                             </td>
-                            <td><span className="db-metode"><CreditCard size={13} strokeWidth={1.9} /> {r.metode}</span></td>
+                            <td><span className="db-metode"><IkonMetode metode={r.metode} /> {r.metode}</span></td>
                             <td className="db-td-total">{formatRupiah(r.total)}</td>
                             <td>
                               <span className={`db-riw-stat ${r.status === 'Lunas' ? 'is-lunas' : r.status === 'Dibatalkan' ? 'is-batal' : 'is-tunggu'}`}>
@@ -1704,7 +2017,7 @@ export default function Dashboard() {
               <div className="db-page">
                 {rapotSaya.filter((r) => r.dinilai > 0).length === 0 ? (
                   <section className="db-block">
-                    <p className="db-kosong">Belum ada rapot penilaian.</p>
+                    <p className="db-kosong">Belum ada rapor penilaian.</p>
                   </section>
                 ) : (
                   <div className="db-rapot-grid">
@@ -1724,9 +2037,9 @@ export default function Dashboard() {
                           {r.item.map((x) => (
                             <li key={x.id}>
                               <span>{x.judul}</span>
-                              <span className="db-love" role="img" aria-label={`${x.love} dari 5`}>
+                              <span className="db-love db-love--bintang" role="img" aria-label={`${x.love} dari 5`}>
                                 {[1, 2, 3, 4, 5].map((n) => (
-                                  <Heart key={n} size={14} strokeWidth={1.9} className={n <= x.love ? 'is-isi' : ''} />
+                                  <Star key={n} size={14} strokeWidth={1.9} className={n <= x.love ? 'is-isi' : ''} />
                                 ))}
                               </span>
                               <b>{x.love > 0 ? x.love : '—'}</b>
@@ -1746,11 +2059,27 @@ export default function Dashboard() {
             )}
 
             {/* ================= KONSULTASI ================= */}
-            {tab === 'konsultasi' && (
+            {tab === 'konsultasi' && (() => {
+              const pilihan = konsulProgramId && selesai.some((p) => p.id === konsulProgramId) ? konsulProgramId : selesai[0]?.id
+              const progKonsul = selesai.find((p) => p.id === pilihan)
+              const namaGuru = progKonsul?.tutor && progKonsul.tutor !== 'Belum ditentukan' ? progKonsul.tutor : 'Tim Pengajar Hifz'
+              if (selesai.length === 0) {
+                return (
+                  <div className="db-page">
+                    <div className="db-kelas-kosong">
+                      <span className="db-kelas-kosong-ic"><MessagesSquare size={22} strokeWidth={1.7} /></span>
+                      <p>Konsultasi belum tersedia.</p>
+                      <span>Konsultasi dapat diajukan setelah Anda menyelesaikan pelatihan.</span>
+                    </div>
+                  </div>
+                )
+              }
+              return (
               <div className="db-page">
                 <div className="db-konsul">
                   <div className="db-konsul-list">
                     <section className="db-block">
+                      <header className="db-block-head"><h4>Sesi Konsultasi</h4></header>
                       <p className="db-kosong">
                         Belum ada sesi konsultasi terjadwal.
                       </p>
@@ -1758,94 +2087,47 @@ export default function Dashboard() {
                   </div>
 
                   <aside className="db-block db-konsul-form">
-                    <header className="db-block-head"><h4>Ajukan konsultasi</h4></header>
-                    <form className="db-form db-form--satu" onSubmit={(e) => e.preventDefault()}>
+                    <header className="db-block-head"><h4>Ajukan Konsultasi</h4></header>
+                    <p className="db-konsul-guru">
+                      <img src={avatarGuru(namaGuru)} alt={namaGuru} loading="lazy" />
+                      Bersama <b>{namaGuru}</b>
+                    </p>
+                    <form className="db-form db-form--satu" onSubmit={(e) => { e.preventDefault(); tampilkanToast('Pengajuan konsultasi telah dikirim.') }}>
                       <label>
                         <span>Program</span>
-                        <select defaultValue={aktif[0]?.id}>
-                          {programSaya.map((p) => (
+                        <select required value={pilihan ?? ''} onChange={(e) => setKonsulProgramId(e.target.value)}>
+                          {selesai.map((p) => (
                             <option key={p.id} value={p.id}>{p.nama}</option>
                           ))}
                         </select>
                       </label>
                       <label>
-                        <span>Topik konsultasi</span>
-                        <input type="text" />
+                        <span>Topik Konsultasi</span>
+                        <input type="text" required />
                       </label>
                       <label>
-                        <span>Usulan jadwal</span>
-                        <input type="text" />
+                        <span>Usulan Jadwal</span>
+                        <input type="text" required />
                       </label>
                       <div className="db-form-foot">
-                        <button type="submit" className="db-btn">Kirim pengajuan</button>
+                        <button type="submit" className="db-btn">Kirim</button>
                       </div>
                     </form>
                   </aside>
                 </div>
               </div>
-            )}
+              )
+            })()}
 
             {/* ================= PROFIL ================= */}
             {tab === 'profil' && (
               <div className="db-page">
-                <section className="db-profil-hp">
-                  <button type="button" onClick={() => {
-                    setNotifTampil((v) => !v)
-                    tandaiNilaiBaca()
-                    tandaiBayarBaca()
-                  }}>
-                    <span className="db-hp-ic"><BellRing size={16} strokeWidth={1.9} /></span>
-                    Notifikasi
-                    {notifBaru > 0 && <i>{notifBaru}</i>}
-                    <ChevronDown size={15} strokeWidth={2} className={`db-hp-caret${notifTampil ? ' is-buka' : ''}`} />
-                  </button>
-                  {notifTampil && (
-                    <ul className="db-hp-notif">
-                      {notifikasi.length === 0 && (
-                        <li>
-                          <p>Belum ada notifikasi.</p>
-                        </li>
-                      )}
-                      {notifikasi.map((n) => (
-                        <li key={n.id} className={n.baru ? 'is-baru' : ''}>
-                          <button
-                            type="button"
-                            className="db-notif-klik"
-                            onClick={() => {
-                              if (n.tab) setTab(n.tab)
-                              setNotifTampil(false)
-                            }}
-                          >
-                            <p>{n.judul}</p>
-                            <span>{waktuNotif(n.waktu)}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <Link to="/keranjang">
-                    <span className="db-hp-ic"><ShoppingCart size={16} strokeWidth={1.9} /></span>
-                    Keranjang
-                    {jmlKeranjang > 0 && <i>{jmlKeranjang}</i>}
-                  </Link>
-                  <button type="button" onClick={() => setTab('riwayat')}>
-                    <span className="db-hp-ic"><ReceiptText size={16} strokeWidth={1.9} /></span>
-                    Riwayat pembelian
-                    {tagihanTunggu.length > 0 && <i>{tagihanTunggu.length}</i>}
-                  </button>
-                  <button type="button" onClick={() => setTab('rapot')}>
-                    <span className="db-hp-ic"><ClipboardList size={16} strokeWidth={1.9} /></span>
-                    Rapot penilaian
-                  </button>
-                  <button type="button" onClick={() => setTab('konsultasi')}>
-                    <span className="db-hp-ic"><MessagesSquare size={16} strokeWidth={1.9} /></span>
-                    Konsultasi
-                  </button>
-                  <button type="button" className="is-keluar" onClick={keluar}>
-                    <span className="db-hp-ic"><LogOut size={16} strokeWidth={1.9} /></span>
-                    Keluar
-                  </button>
-                </section>
+                {profilWajib && (
+                  <div className="db-wajib">
+                    <Info size={15} strokeWidth={2} aria-hidden="true" />
+                    Lengkapi profil Anda untuk melanjutkan.
+                  </div>
+                )}
 
                 <div className="db-profil">
                   <aside className="db-profil-card">
@@ -1859,23 +2141,31 @@ export default function Dashboard() {
                       </label>
                     </span>
                     <h3>{user.nama}</h3>
-                    <p>{user.email}</p>
                     <span className="db-profil-paket"><BadgeCheck size={14} strokeWidth={2} /> Peserta Hifz</span>
                     <ul>
-                      {user.telepon && <li><UserCheck size={14} strokeWidth={1.9} /> {user.telepon}</li>}
+                      <li><Mail size={14} strokeWidth={1.9} /> {user.email}</li>
+                      {user.telepon && <li><Phone size={14} strokeWidth={1.9} /> {user.telepon}</li>}
                       {user.alamat && <li><MapPin size={14} strokeWidth={1.9} /> {user.alamat}</li>}
-                      <li><GraduationCap size={14} strokeWidth={1.9} /> {programSaya.length} program diikuti</li>
-                      <li><Award size={14} strokeWidth={1.9} /> {selesai.length} program selesai</li>
                     </ul>
+                    <div className="db-profil-stat">
+                      <div>
+                        <strong>{programSaya.length}</strong>
+                        <span>Program Diikuti</span>
+                      </div>
+                      <div>
+                        <strong>{selesai.length}</strong>
+                        <span>Program Selesai</span>
+                      </div>
+                    </div>
                   </aside>
 
                   <div className="db-profil-main">
                     <section className="db-block">
-                      <header className="db-block-head"><h4>Data diri</h4></header>
+                      <header className="db-block-head"><h4>Data Diri</h4></header>
                       <form className="db-form" onSubmit={simpanProfil}>
                         <label>
-                          <span>Nama lengkap</span>
-                          <input type="text" value={profilForm?.nama ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, nama: e.target.value }))} />
+                          <span>Nama Lengkap</span>
+                          <input type="text" required disabled={!bolehEdit} value={profilForm?.nama ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, nama: e.target.value }))} />
                         </label>
                         <label>
                           <span>Email</span>
@@ -1883,73 +2173,85 @@ export default function Dashboard() {
                         </label>
                         <label>
                           <span>Nomor WhatsApp</span>
-                          <input type="tel" value={profilForm?.telepon ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, telepon: e.target.value }))} placeholder="Contoh: 0812 3456 7890" />
+                          <input type="tel" required disabled={!bolehEdit} value={profilForm?.telepon ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, telepon: e.target.value }))} />
                         </label>
                         <label>
                           <span>Provinsi</span>
-                          <select value={profilForm?.provinsi.id ?? ''} onChange={(e) => pilihWilayah('provinsi', e)}>
-                            <option value="">Pilih provinsi</option>
+                          <select required value={profilForm?.provinsi.id ?? ''} onChange={(e) => pilihWilayah('provinsi', e)} disabled={!bolehEdit}>
+                            <option value="">Pilih Provinsi</option>
                             {wilayah.provinsi.map((w) => <option key={w.id} value={w.id} data-nama={rapiWilayah(w.name)}>{rapiWilayah(w.name)}</option>)}
                           </select>
                         </label>
                         <label>
-                          <span>Kota / Kabupaten</span>
-                          <select value={profilForm?.kota.id ?? ''} onChange={(e) => pilihWilayah('kota', e)} disabled={!profilForm?.provinsi.id}>
-                            <option value="">Pilih kota / kabupaten</option>
+                          <span>Kota/Kabupaten</span>
+                          <select required value={profilForm?.kota.id ?? ''} onChange={(e) => pilihWilayah('kota', e)} disabled={!bolehEdit || !profilForm?.provinsi.id}>
+                            <option value="">Pilih Kota/Kabupaten</option>
                             {wilayah.kota.map((w) => <option key={w.id} value={w.id} data-nama={rapiWilayah(w.name)}>{rapiWilayah(w.name)}</option>)}
                           </select>
                         </label>
                         <label>
                           <span>Kecamatan</span>
-                          <select value={profilForm?.kecamatan.id ?? ''} onChange={(e) => pilihWilayah('kecamatan', e)} disabled={!profilForm?.kota.id}>
-                            <option value="">Pilih kecamatan</option>
+                          <select required value={profilForm?.kecamatan.id ?? ''} onChange={(e) => pilihWilayah('kecamatan', e)} disabled={!bolehEdit || !profilForm?.kota.id}>
+                            <option value="">Pilih Kecamatan</option>
                             {wilayah.kecamatan.map((w) => <option key={w.id} value={w.id} data-nama={rapiWilayah(w.name)}>{rapiWilayah(w.name)}</option>)}
                           </select>
                         </label>
                         <label>
-                          <span>Kelurahan / Desa</span>
-                          <select value={profilForm?.kelurahan.id ?? ''} onChange={(e) => pilihWilayah('kelurahan', e)} disabled={!profilForm?.kecamatan.id}>
-                            <option value="">Pilih kelurahan / desa</option>
+                          <span>Kelurahan/Desa</span>
+                          <select required value={profilForm?.kelurahan.id ?? ''} onChange={(e) => pilihWilayah('kelurahan', e)} disabled={!bolehEdit || !profilForm?.kecamatan.id}>
+                            <option value="">Pilih Kelurahan/Desa</option>
                             {wilayah.kelurahan.map((w) => <option key={w.id} value={w.id} data-nama={rapiWilayah(w.name)}>{rapiWilayah(w.name)}</option>)}
                           </select>
                         </label>
                         <label>
-                          <span>Kode pos</span>
-                          <input type="text" inputMode="numeric" maxLength={5} value={profilForm?.kodePos ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, kodePos: e.target.value.replace(/\D/g, '') }))} placeholder="Contoh: 55281" />
+                          <span>Kode Pos</span>
+                          <input type="text" required disabled={!bolehEdit} inputMode="numeric" maxLength={5} value={profilForm?.kodePos ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, kodePos: e.target.value.replace(/\D/g, '') }))} />
                         </label>
                         <label className="db-form-penuh">
-                          <span>Alamat jalan</span>
-                          <input type="text" value={profilForm?.jalan ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, jalan: e.target.value }))} placeholder="Nama jalan, nomor rumah, RT/RW" />
+                          <span>Alamat Jalan</span>
+                          <input type="text" required disabled={!bolehEdit} value={profilForm?.jalan ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, jalan: e.target.value }))} placeholder="Nama jalan, nomor rumah, RT/RW" />
                         </label>
-                        <div className="db-form-penuh">
-                          <span className="db-form-label">Titik lokasi</span>
-                          <div className="dtf-lokasi">
-                            <input type="text" placeholder="Latitude" value={profilForm?.lat ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, lat: e.target.value }))} />
-                            <input type="text" placeholder="Longitude" value={profilForm?.lng ?? ''} onChange={(e) => setProfilForm((f) => ({ ...f, lng: e.target.value }))} />
-                            <button type="button" onClick={ambilLokasi}>
-                              <MapPinned size={14} strokeWidth={2} aria-hidden="true" /> Ambil lokasi saat ini
-                            </button>
-                          </div>
-                          {lokasiStatus && <em className="dtf-lokasi-status">{lokasiStatus}</em>}
-                        </div>
                         <div className="db-form-foot">
-                          {profilStatus && <span className="db-profil-status">{profilStatus}</span>}
-                          <button type="submit" className="db-btn">Simpan perubahan</button>
+                          {bolehEdit
+                            ? <button type="submit" className="db-btn">Simpan</button>
+                            : <button type="button" className="db-btn db-btn--ghost" onClick={() => setEditProfil(true)}>Edit</button>}
                         </div>
                       </form>
                     </section>
 
                     <section className="db-block">
-                      <header className="db-block-head"><h4>Keamanan akun</h4></header>
+                      <header className="db-block-head"><h4>Keamanan Akun</h4></header>
                       <div className="db-secure">
                         <div>
                           <span className="db-act-ic"><ShieldCheck size={15} strokeWidth={1.9} /></span>
                           <div>
-                            <p>Password</p>
+                            <p>Kata Sandi</p>
+                            <span>Perubahan langsung tersinkron dengan akun masuk Anda.</span>
                           </div>
                         </div>
-                        <button type="button" className="db-btn db-btn--ghost">Ganti password</button>
+                        <button
+                          type="button"
+                          className="db-btn db-btn--ghost"
+                          onClick={() => setPwForm(pwForm ? null : { baru: '', ulang: '' })}
+                        >
+                          {pwForm ? 'Batal' : 'Ganti'}
+                        </button>
                       </div>
+                      {pwForm && (
+                        <form className="db-form db-secure-form" onSubmit={gantiPassword}>
+                          <label>
+                            <span>Kata Sandi Baru</span>
+                            <input type="password" required minLength={6} value={pwForm.baru} onChange={(e) => setPwForm((f) => ({ ...f, baru: e.target.value }))} placeholder="Minimal 6 karakter" />
+                          </label>
+                          <label>
+                            <span>Ulangi Kata Sandi Baru</span>
+                            <input type="password" required minLength={6} value={pwForm.ulang} onChange={(e) => setPwForm((f) => ({ ...f, ulang: e.target.value }))} placeholder="Ketik ulang kata sandi baru" />
+                          </label>
+                          <div className="db-form-foot">
+                            <button type="submit" className="db-btn">Simpan</button>
+                          </div>
+                        </form>
+                      )}
                     </section>
                   </div>
                 </div>
@@ -1958,6 +2260,30 @@ export default function Dashboard() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            className={`db-toast${toast.jenis === 'gagal' ? ' db-toast--gagal' : ''}`}
+            initial={{ opacity: 0, y: 28, scale: 0.88 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+            role="status"
+          >
+            <motion.span
+              className="db-toast-ic"
+              initial={{ scale: 0, rotate: -40 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 16, delay: 0.08 }}
+            >
+              {toast.jenis === 'gagal' ? <XCircle size={17} strokeWidth={2.1} /> : <BadgeCheck size={17} strokeWidth={2.1} />}
+            </motion.span>
+            {toast.pesan}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {bayarProgram && (
         <BayarModal

@@ -26,7 +26,7 @@ export default function Daftar() {
       })
       simpanToken(accessToken)
       localStorage.setItem('hifzUser', JSON.stringify({ nama: user.nama, email: user.email, peran: user.peran, hp: form.hp.value.trim() }))
-      navigate(state?.dari ?? '/dashboard')
+      navigate(state?.dari ?? '/dashboard?tab=profil')
     } catch (err) {
       setGalat(err.message)
     } finally {

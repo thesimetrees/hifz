@@ -1,12 +1,14 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  AlignLeft,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
   Banknote,
   Bell,
+  BellOff,
   BellRing,
   BookOpen,
   CalendarDays,
@@ -25,38 +27,50 @@ import {
   FileText,
   FileUp,
   Flame,
+  FolderOpen,
+  Globe,
   Goal,
   GraduationCap,
   HelpCircle,
+  Hourglass,
   ImagePlus,
+  Inbox,
   KeyRound,
   Layers3,
   LayoutDashboard,
+  Link2,
   LogOut,
   Mail,
   MapPin,
   MonitorPlay,
   Newspaper,
   Package,
+  PackageOpen,
   PanelLeftClose,
   PanelLeftOpen,
   Phone,
   Plus,
   Power,
   ReceiptText,
+  RefreshCw,
   Save,
   Search,
+  SearchX,
+  Shapes,
   ShoppingBag,
   Sparkles,
   SquarePen,
   SquarePlay,
   Store,
+  Tag,
   Timer,
   Trash2,
+  Type,
   Upload,
   UserCheck,
   UserPlus,
   UserRound,
+  UserX,
   Users,
   UsersRound,
   Video,
@@ -64,10 +78,7 @@ import {
   X,
 } from 'lucide-react'
 import {
-  admin,
-  bahasaProgram,
   formatRupiah,
-  gambarKategori,
   inisial,
   jamSub,
   jamRentangSub,
@@ -87,7 +98,16 @@ import {
 } from './adminData.js'
 import { daftarGambar } from '../toko/tokoData.js'
 import PlayerTertutup from '../../components/PlayerTertutup.jsx'
-import { api, hapusToken, kompresFoto, KUNCI_TOKEN } from '../../lib/api.js'
+import { adaSesi, api, hapusToken, kompresFoto, KUNCI_TOKEN } from '../../lib/api.js'
+import { bacaAbsensi, bacaPenilaian, bacaProgres, hitungProgres, pesertaProgram, sinkronBelajar } from '../../lib/progres.js'
+
+// Empty-state ringkas berbasis ikon
+const Kosong = ({ icon: Ic, teks }) => (
+  <div className="db-kosong-state">
+    <span><Ic size={17} strokeWidth={1.8} /></span>
+    <p>{teks}</p>
+  </div>
+)
 
 const NAV = [
   { id: 'ringkasan', label: 'Ringkasan', icon: LayoutDashboard },
@@ -118,7 +138,6 @@ const programKosong = {
   kategori: kategoriProgram[0],
   jenis: 'Short Course',
   mode: 'Online',
-  bahasa: 'Indonesia',
   tutor: '',
   harga: '',
   deskripsi: '',
@@ -210,7 +229,15 @@ export default function AdminDashboard() {
       navigate('/masuk', { replace: true })
       return
     }
-    setUser({ ...admin, nama: tersimpan.nama ?? admin.nama, email: tersimpan.email ?? admin.email })
+    setUser({ nama: tersimpan.nama ?? 'Admin', email: tersimpan.email ?? '' })
+    // sesi Supabase bisa kadaluarsa walau localStorage masih ada — paksa masuk ulang
+    adaSesi().then((ok) => {
+      if (!ok) {
+        localStorage.removeItem('hifzUser')
+        hapusToken()
+        navigate('/masuk', { replace: true })
+      }
+    })
   }, [navigate])
 
   useEffect(() => {
@@ -228,7 +255,7 @@ export default function AdminDashboard() {
         setPengguna(us.map(petaPengguna))
         setTransaksi(trx)
         setProduk(prd)
-        setBerita(brt.map((b) => ({ ...b, penulis: admin.nama })))
+        setBerita(brt)
       })
       .catch((err) => {
         if (hidup) setGalat(`Gagal memuat data dari server: ${err.message}`)
@@ -237,6 +264,33 @@ export default function AdminDashboard() {
       hidup = false
     }
   }, [])
+
+  // realtime: transaksi & pengguna disegarkan berkala + saat tab difokuskan
+  useEffect(() => {
+    let hidup = true
+    const segarkan = async () => {
+      try {
+        const [trx, us] = await Promise.all([api('/toko/orders'), api('/users')])
+        if (!hidup) return
+        setTransaksi(trx)
+        setPengguna(us.map(petaPengguna))
+      } catch {
+        // server tidak terjangkau, coba lagi pada siklus berikutnya
+      }
+    }
+    const id = setInterval(segarkan, 15000)
+    const onFokus = () => segarkan()
+    window.addEventListener('focus', onFokus)
+    return () => {
+      hidup = false
+      clearInterval(id)
+      window.removeEventListener('focus', onFokus)
+    }
+  }, [])
+
+  // realtime Supabase: progres/absensi/penilaian peserta ikut tampil di admin
+  const [, setBelajarV] = useState(0)
+  useEffect(() => sinkronBelajar(() => setBelajarV((v) => v + 1)), [])
 
   const program = programs.find((p) => p.id === progId)
 
@@ -250,7 +304,6 @@ export default function AdminDashboard() {
           kategori: p.kategori,
           jenis: p.jenis,
           mode: p.mode ?? 'Online',
-          bahasa: p.bahasa ?? 'Indonesia',
           tutor: p.tutor ?? '',
           harga: p.harga ? String(p.harga) : '',
           deskripsi: p.deskripsi ?? '',
@@ -312,7 +365,7 @@ export default function AdminDashboard() {
           tutor: 'Belum ditentukan',
           harga: 0,
           deskripsi: 'Narasi program belum ditulis.',
-          gambar: gambarKategori(kategoriProgram[0]),
+          gambar: '',
         },
       })
       setPrograms((prev) => [...prev, hasil])
@@ -329,23 +382,53 @@ export default function AdminDashboard() {
     setFormProgram((f) => ({ ...f, ...patch }))
   }
 
+  const patchInfo = () => ({
+    nama: formProgram.nama.trim(),
+    kategori: formProgram.kategori,
+    jenis: formProgram.jenis,
+    mode: formProgram.mode,
+    gambar: formProgram.gambar,
+    tutor: formProgram.tutor.trim(),
+    harga: Number(formProgram.harga) || 0,
+    deskripsi: formProgram.deskripsi.trim(),
+  })
+
+  // simpan otomatis: perubahan form info dipatch dengan jeda singkat
+  const infoInit = useRef(null)
+  const [infoSimpan, setInfoSimpan] = useState(false)
+  useEffect(() => {
+    if (!progId) return
+    if (infoInit.current !== progId) {
+      infoInit.current = progId
+      return
+    }
+    if (!formProgram.nama.trim()) return
+    setInfoSimpan(true)
+    const t = setTimeout(async () => {
+      try {
+        const hasil = await api(`/programs/${progId}`, { method: 'PATCH', body: patchInfo() })
+        setPrograms((prev) => prev.map((p) => (p.id === progId ? hasil : p)))
+        setInfoOk(true)
+      } catch (err) {
+        setGalat(err.message)
+      } finally {
+        setInfoSimpan(false)
+      }
+    }, 900)
+    return () => {
+      clearTimeout(t)
+      setInfoSimpan(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formProgram, progId])
+
   const simpanInfo = async (e) => {
     e.preventDefault()
     if (!formProgram.nama.trim() || !formProgram.deskripsi.trim() || !formProgram.tutor.trim()) return
     try {
       const hasil = await api(`/programs/${progId}`, {
         method: 'PATCH',
-        body: {
-          nama: formProgram.nama.trim(),
-          kategori: formProgram.kategori,
-          jenis: formProgram.jenis,
-          mode: formProgram.mode,
-          bahasa: formProgram.bahasa,
-          gambar: formProgram.gambar || gambarKategori(formProgram.kategori),
-          tutor: formProgram.tutor.trim(),
-          harga: Number(formProgram.harga) || 0,
-          deskripsi: formProgram.deskripsi.trim(),
-        },
+        body: patchInfo(),
       })
       setPrograms((prev) => prev.map((p) => (p.id === progId ? hasil : p)))
       setInfoOk(true)
@@ -755,7 +838,7 @@ export default function AdminDashboard() {
     const body = {
       judul: formBerita.judul.trim(),
       kategori: formBerita.kategori,
-      penulis: admin.nama,
+      penulis: user?.nama || 'Admin Hifz',
       gambar: formBerita.gambar,
       ringkas: formBerita.ringkas.trim(),
       konten: formBerita.konten.trim(),
@@ -813,7 +896,7 @@ export default function AdminDashboard() {
   if (!user) return null
 
   const judulTab = {
-    ringkasan: `Ahlan, ${user.nama.split(' ')[0]}!`,
+    ringkasan: 'Dasbor Utama',
     program: progId ? program?.nama : 'Program & Materi',
     pengguna: 'Kelola Pengguna',
     transaksi: 'Transaksi',
@@ -986,8 +1069,7 @@ export default function AdminDashboard() {
                     <span className="db-stat-ic"><Banknote size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{formatRupiah(pendapatan)}</strong>
-                      <p>Pendapatan lunas</p>
-                      <em>{transaksi.filter((t) => t.status === 'Lunas').length} lunas · {pengguna.length} pengguna terdaftar</em>
+                      <p>Pendapatan</p>
                     </div>
                   </div>
                   <div className="db-statcell">
@@ -995,31 +1077,27 @@ export default function AdminDashboard() {
                     <div>
                       <strong>{programs.filter((p) => p.status === 'terbit').length}</strong>
                       <p>Program terbit</p>
-                      <em>{programs.length} total · {programs.filter((p) => p.status === 'draf').length} draf</em>
                     </div>
                   </div>
                   <div className="db-statcell">
                     <span className="db-stat-ic"><UsersRound size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{totalPeserta}</strong>
-                      <p>Peserta aktif</p>
-                      <em>{pengguna.filter((u) => u.peran === 'tutor').length} tutor pengampu</em>
+                      <p>Peserta</p>
                     </div>
                   </div>
                   <div className="db-statcell">
                     <span className="db-stat-ic db-stat-ic--gold"><CreditCard size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{menunggu.length}</strong>
-                      <p>Pembayaran menunggu</p>
-                      <em>senilai {formatRupiah(menunggu.reduce((a, t) => a + t.total, 0))}</em>
+                      <p>Pembayaran tertunda</p>
                     </div>
                   </div>
                   <div className="db-statcell">
                     <span className="db-stat-ic"><UserCheck size={17} strokeWidth={1.9} /></span>
                     <div>
                       <strong>{pengguna.length}</strong>
-                      <p>Pengguna terdaftar</p>
-                      <em>{pengguna.filter((u) => u.status === 'aktif').length} aktif · {pengguna.filter((u) => u.status !== 'aktif').length} nonaktif</em>
+                      <p>Pengguna</p>
                     </div>
                   </div>
                 </div>
@@ -1028,11 +1106,11 @@ export default function AdminDashboard() {
                   <div className="db-col-main">
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4><CircleCheckBig size={15} strokeWidth={2} /> Transaksi lunas terbaru</h4>
+                        <h4><CircleCheckBig size={15} strokeWidth={2} /> Transaksi Terkonfirmasi</h4>
                         <span className="db-block-sub">{transaksi.filter((t) => t.status === 'Lunas').length} transaksi</span>
                       </header>
                       {transaksi.filter((t) => t.status === 'Lunas').length === 0 ? (
-                        <p className="db-kosong">Belum ada transaksi lunas. Pesanan akan tampil setelah dikonfirmasi.</p>
+                        <div className="db-kosong"><Kosong icon={Inbox} teks="Belum ada transaksi terkonfirmasi" /></div>
                       ) : (
                         <ul className="db-tenggat">
                           {transaksi.filter((t) => t.status === 'Lunas').slice(0, 5).map((t) => (
@@ -1050,11 +1128,11 @@ export default function AdminDashboard() {
 
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4><Timer size={15} strokeWidth={2} /> Pembayaran menunggu konfirmasi</h4>
+                        <h4><Timer size={15} strokeWidth={2} /> Menunggu Konfirmasi</h4>
                         <span className="db-block-sub">{menunggu.length} transaksi</span>
                       </header>
                       {menunggu.length === 0 ? (
-                        <p className="db-kosong">Tidak ada pembayaran menunggu.</p>
+                        <div className="db-kosong"><Kosong icon={Hourglass} teks="Tidak ada pembayaran tertunda" /></div>
                       ) : (
                         <ul className="db-tenggat">
                           {menunggu.map((t) => (
@@ -1072,11 +1150,11 @@ export default function AdminDashboard() {
 
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4><Flame size={15} strokeWidth={2} /> Program terlaris</h4>
+                        <h4><Flame size={15} strokeWidth={2} /> Program Terlaris</h4>
                         <span className="db-block-sub">{programs.length} program aktif</span>
                       </header>
                       {programs.length === 0 ? (
-                        <p className="db-kosong">Belum ada program.</p>
+                        <div className="db-kosong"><Kosong icon={FolderOpen} teks="Belum ada program" /></div>
                       ) : (
                         <ul className="db-peserta">
                           {[...programs].sort((a, b) => (b.peserta ?? 0) - (a.peserta ?? 0)).slice(0, 5).map((p) => (
@@ -1108,7 +1186,7 @@ export default function AdminDashboard() {
                         </div>
                       </header>
                       {aktivitas.length === 0 ? (
-                        <p className="db-kosong">Belum ada notifikasi baru.</p>
+                        <div className="db-kosong"><Kosong icon={BellOff} teks="Tidak ada notifikasi" /></div>
                       ) : (
                         <div className="db-notif-scroll">
                           <ul className="db-notif-list">
@@ -1154,35 +1232,35 @@ export default function AdminDashboard() {
 
                     <section className="db-block">
                       <header className="db-block-head">
-                        <h4><ChartColumn size={15} strokeWidth={2} /> Statistik ringkas</h4>
+                        <h4><ChartColumn size={15} strokeWidth={2} /> Statistik Ringkas</h4>
                       </header>
                       <ul className="db-stat-mini">
                         <li>
                           <span className="db-stat-mini-ic"><BookOpen size={12} strokeWidth={2.1} /></span>
                           <div>
                             <strong>{programs.reduce((a, p) => a + (semuaSub(p).length), 0)}</strong>
-                            <span>Total materi terdaftar</span>
+                            <span>Materi Terdaftar</span>
                           </div>
                         </li>
                         <li>
                           <span className="db-stat-mini-ic"><Newspaper size={12} strokeWidth={2.1} /></span>
                           <div>
                             <strong>{berita.length}</strong>
-                            <span>Artikel berita terbit</span>
+                            <span>Artikel Terbit</span>
                           </div>
                         </li>
                         <li>
                           <span className="db-stat-mini-ic"><Package size={12} strokeWidth={2.1} /></span>
                           <div>
                             <strong>{produk.length}</strong>
-                            <span>Produk di toko</span>
+                            <span>Produk Toko</span>
                           </div>
                         </li>
                         <li>
                           <span className="db-stat-mini-ic"><Goal size={12} strokeWidth={2.1} /></span>
                           <div>
                             <strong>{menunggu.length + aktivitas.filter((a) => !a.dibaca).length}</strong>
-                            <span>Tugas perlu tindak lanjut</span>
+                            <span>Perlu Tindak Lanjut</span>
                           </div>
                         </li>
                       </ul>
@@ -1312,7 +1390,7 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {programs.length > 0 && programs.filter((p) => (filterProg === 'semua' ? true : p.status === filterProg)).filter((p) => `${p.nama} ${p.kategori} ${p.tutor}`.toLowerCase().includes(cariProgram.toLowerCase())).length === 0 && (
-                  <p className="db-kosong">Tidak ada program yang cocok dengan pencarian atau filter saat ini.</p>
+                  <div className="db-kosong"><Kosong icon={SearchX} teks="Tidak ditemukan program yang sesuai" /></div>
                 )}
               </div>
             )}
@@ -1348,130 +1426,97 @@ export default function AdminDashboard() {
                       </header>
                       {blokBuka.info && (
                       <form className="db-form-program" onSubmit={simpanInfo}>
-                        {/* ============== Bagian 1: Identitas Program ============== */}
-                        <div className="db-form-bagian">
-                          <div className="db-form-bagian-judul">
-                            <span>Identitas program</span>
-                          </div>
-                          <div className="db-form-program-grid">
-                            <label className="db-form-program-full">
-                              <span>Nama program</span>
-                              <input
-                                type="text"
-                                placeholder="cth. Tahsin Intensif Ramadhan"
-                                value={formProgram.nama}
-                                onChange={(e) => ubahInfo({ nama: e.target.value })}
-                              />
-                            </label>
-                            <label>
-                              <span>Kategori</span>
-                              <select value={formProgram.kategori} onChange={(e) => ubahInfo({ kategori: e.target.value })}>
-                                {kategoriProgram.map((k) => <option key={k}>{k}</option>)}
-                              </select>
-                            </label>
-                            <label>
-                              <span>Jenis program</span>
-                              <select value={formProgram.jenis} onChange={(e) => ubahInfo({ jenis: e.target.value })}>
-                                {jenisProgram.map((j) => <option key={j}>{j}</option>)}
-                              </select>
-                            </label>
-                            <label>
-                              <span>Mode belajar</span>
-                              <select value={formProgram.mode} onChange={(e) => ubahInfo({ mode: e.target.value })}>
-                                {modeProgram.map((m) => <option key={m}>{m}</option>)}
-                              </select>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* ============== Bagian 2: Pengaturan LMS ============== */}
-                        <div className="db-form-bagian">
-                          <div className="db-form-bagian-judul">
-                            <span>Pengaturan pembelajaran</span>
-                          </div>
-                          <div className="db-form-program-grid">
-                            <label>
-                              <span>Bahasa pengantar</span>
-                              <select value={formProgram.bahasa} onChange={(e) => ubahInfo({ bahasa: e.target.value })}>
-                                {bahasaProgram.map((b) => <option key={b}>{b}</option>)}
-                              </select>
-                            </label>
-                            <label>
-                              <span>Tutor pengampu</span>
-                              <input
-                                type="text"
-                                list="daftar-guru"
-                                placeholder="Nama guru"
-                                value={formProgram.tutor}
-                                onChange={(e) => ubahInfo({ tutor: e.target.value })}
-                              />
-                            </label>
-                            <label>
-                              <span>Harga (Rp)</span>
-                              <input
-                                type="number"
-                                min="0"
-                                placeholder="0 = gratis"
-                                value={formProgram.harga}
-                                onChange={(e) => ubahInfo({ harga: e.target.value })}
-                              />
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* ============== Bagian 3: Narasi ============== */}
-                        <div className="db-form-bagian">
-                          <div className="db-form-bagian-judul">
-                            <span>Deskripsi</span>
-                          </div>
+                        <div className="db-form-program-grid db-form-program-grid--rata">
                           <label className="db-form-program-full">
-                            <span>Narasi program</span>
-                            <textarea
-                              rows={3}
-                              placeholder="Jelaskan tujuan program, siapa peserta yang dituju, dan hasil belajar yang diharapkan."
-                              value={formProgram.deskripsi}
-                              onChange={(e) => ubahInfo({ deskripsi: e.target.value })}
+                            <span title="Nama program"><Type size={13} strokeWidth={2} /></span>
+                            <input
+                              type="text"
+                              placeholder="Nama program"
+                              value={formProgram.nama}
+                              onChange={(e) => ubahInfo({ nama: e.target.value })}
+                            />
+                          </label>
+                          <label>
+                            <span title="Kategori"><Tag size={13} strokeWidth={2} /></span>
+                            <select value={formProgram.kategori} onChange={(e) => ubahInfo({ kategori: e.target.value })}>
+                              {kategoriProgram.map((k) => <option key={k}>{k}</option>)}
+                            </select>
+                          </label>
+                          <label>
+                            <span title="Jenis program"><Shapes size={13} strokeWidth={2} /></span>
+                            <select value={formProgram.jenis} onChange={(e) => ubahInfo({ jenis: e.target.value })}>
+                              {jenisProgram.map((j) => <option key={j}>{j}</option>)}
+                            </select>
+                          </label>
+                          <label>
+                            <span title="Mode belajar"><Globe size={13} strokeWidth={2} /></span>
+                            <select value={formProgram.mode} onChange={(e) => ubahInfo({ mode: e.target.value })}>
+                              {modeProgram.map((m) => <option key={m}>{m}</option>)}
+                            </select>
+                          </label>
+                          <label className="db-span-3">
+                            <span title="Guru pengampu"><GraduationCap size={13} strokeWidth={2} /></span>
+                            <select value={formProgram.tutor} onChange={(e) => ubahInfo({ tutor: e.target.value })}>
+                              <option value="">Pilih guru</option>
+                              {formProgram.tutor && !daftarGuru.includes(formProgram.tutor) && (
+                                <option value={formProgram.tutor}>{formProgram.tutor}</option>
+                              )}
+                              {daftarGuru.map((g) => <option key={g}>{g}</option>)}
+                            </select>
+                          </label>
+                          <label className="db-span-3">
+                            <span title="Harga"><Wallet size={13} strokeWidth={2} /></span>
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="Harga (0 = gratis)"
+                              value={formProgram.harga}
+                              onChange={(e) => ubahInfo({ harga: e.target.value })}
                             />
                           </label>
                         </div>
 
-                        {/* ============== Bagian 4: Media ============== */}
-                        <div className="db-form-bagian">
-                          <div className="db-form-bagian-judul">
-                            <span>Sampul program</span>
-                          </div>
-                          <div className="db-form-program-full db-form-gambar">
-                            <span>Gambar program</span>
-                            <div className="db-gambar-row">
-                              <label className="db-gambar-drop">
-                                {formProgram.gambar ? (
-                                  <img src={formProgram.gambar} alt="Pratinjau gambar program" />
-                                ) : (
-                                  <span className="db-gambar-plh">
-                                    <ImagePlus size={22} strokeWidth={1.8} aria-hidden="true" />
-                                    Klik untuk unggah gambar
-                                  </span>
-                                )}
-                                <input type="file" accept="image/*" onChange={pilihGambarProgram} />
-                              </label>
-                              {formProgram.gambar && (
-                                <button
-                                  type="button"
-                                  className="db-btn db-btn--ghost db-btn--sm"
-                                  onClick={() => ubahInfo({ gambar: '' })}
-                                >
-                                  <Trash2 size={14} strokeWidth={2} /> Hapus gambar
-                                </button>
+                        <label className="db-form-program-full">
+                          <span title="Deskripsi"><AlignLeft size={13} strokeWidth={2} /></span>
+                          <textarea
+                            rows={3}
+                            placeholder="Deskripsi singkat."
+                            value={formProgram.deskripsi}
+                            onChange={(e) => ubahInfo({ deskripsi: e.target.value })}
+                          />
+                        </label>
+
+                        <div className="db-form-program-full db-form-gambar">
+                          <div className="db-gambar-row">
+                            <label className="db-gambar-drop">
+                              {formProgram.gambar ? (
+                                <img src={formProgram.gambar} alt="Pratinjau gambar program" />
+                              ) : (
+                                <span className="db-gambar-plh">
+                                  <ImagePlus size={22} strokeWidth={1.8} aria-hidden="true" />
+                                  Unggah gambar
+                                </span>
                               )}
-                            </div>
+                              <input type="file" accept="image/*" onChange={pilihGambarProgram} />
+                            </label>
+                            {formProgram.gambar && (
+                              <button
+                                type="button"
+                                className="db-btn db-btn--ghost db-btn--sm"
+                                onClick={() => ubahInfo({ gambar: '' })}
+                              >
+                                <Trash2 size={14} strokeWidth={2} /> Hapus
+                              </button>
+                            )}
                           </div>
                         </div>
 
                         <div className="db-modul-form-btns">
-                          {infoOk && <em className="db-jadwal-ok"><CheckCircle2 size={13} strokeWidth={2.1} /> Informasi tersimpan</em>}
-                          <button type="submit" className="db-btn db-btn--sm">
-                            <Save size={14} strokeWidth={2.1} /> Simpan informasi
-                          </button>
+                          {infoSimpan ? (
+                            <em className="db-jadwal-ok is-proses"><RefreshCw size={13} strokeWidth={2.1} /> Menyimpan…</em>
+                          ) : infoOk ? (
+                            <em className="db-jadwal-ok"><CheckCircle2 size={13} strokeWidth={2.1} /> Tersimpan otomatis</em>
+                          ) : null}
                         </div>
                       </form>
                       )}
@@ -1502,33 +1547,30 @@ export default function AdminDashboard() {
                       {temaFormBuka || editTemaId ? (
                         <form className="db-form-tema" onSubmit={simpanTema}>
                         <div className="db-form-bagian">
-                          <div className="db-form-bagian-judul">
-                            <span>Detail materi</span>
-                          </div>
                           <div className="db-form-tema-grid">
                             <label className="db-f db-f--full">
-                              <span>Judul materi</span>
+                              <span title="Judul materi"><Type size={13} strokeWidth={2} /></span>
                               <input
                                 type="text"
-                                placeholder="cth. Makharijul huruf"
+                                placeholder="Judul materi"
                                 value={formTema.judul}
                                 onChange={(e) => setFormTema((f) => ({ ...f, judul: e.target.value }))}
                               />
                             </label>
                             <label className="db-f">
-                              <span>Narasi materi</span>
+                              <span title="Narasi materi"><AlignLeft size={13} strokeWidth={2} /></span>
                               <textarea
                                 rows={3}
-                                placeholder="Cakupan besar dan tujuan pembelajaran materi ini."
+                                placeholder="Narasi materi"
                                 value={formTema.narasi}
                                 onChange={(e) => setFormTema((f) => ({ ...f, narasi: e.target.value }))}
                               />
                             </label>
                             <label className="db-f">
-                              <span>Indikator capaian</span>
+                              <span title="Indikator capaian"><Goal size={13} strokeWidth={2} /></span>
                               <textarea
                                 rows={3}
-                                placeholder={'Peserta melafalkan 28 huruf sesuai makhraj\nPeserta membedakan huruf yang serupa'}
+                                placeholder="Indikator capaian"
                                 value={formTema.indikator}
                                 onChange={(e) => setFormTema((f) => ({ ...f, indikator: e.target.value }))}
                               />
@@ -1648,25 +1690,21 @@ export default function AdminDashboard() {
 
                             {subTarget === t.id ? (
                               <form className="db-form-sub" onSubmit={simpanSub}>
-                                {/* ===== Bagian 1: Judul & Narasi ===== */}
                                 <div className="db-form-bagian">
-                                  <div className="db-form-bagian-judul">
-                                    <span>Identitas sub materi</span>
-                                  </div>
                                   <label className="db-f db-f--full">
-                                    <span>Judul sub materi</span>
+                                    <span title="Judul sub materi"><Type size={13} strokeWidth={2} /></span>
                                     <input
                                       type="text"
-                                      placeholder="cth. Huruf halqiyah"
+                                      placeholder="Judul sub materi"
                                       value={formSub.judul}
                                       onChange={(e) => ubahSub({ judul: e.target.value })}
                                     />
                                   </label>
                                   <label className="db-f db-f--full">
-                                    <span>Narasi (opsional)</span>
+                                    <span title="Narasi (opsional)"><AlignLeft size={13} strokeWidth={2} /></span>
                                     <textarea
                                       rows={2}
-                                      placeholder="Fokus bahasan sub materi ini."
+                                      placeholder="Narasi (opsional)"
                                       value={formSub.narasi}
                                       onChange={(e) => ubahSub({ narasi: e.target.value })}
                                     />
@@ -1675,11 +1713,8 @@ export default function AdminDashboard() {
 
                                 {/* ===== Bagian 2: Bentuk & Konten ===== */}
                                 <div className="db-form-bagian">
-                                  <div className="db-form-bagian-judul">
-                                    <span>Bentuk & konten pembelajaran</span>
-                                  </div>
                                   <div className="db-f db-f--full">
-                                    <span>Bentuk pembelajaran</span>
+                                    <span title="Bentuk pembelajaran"><Shapes size={13} strokeWidth={2} /></span>
                                     <div className="db-jenis-pilih" role="radiogroup">
                                       {jenisPembelajaran.map((tp) => {
                                         const Ik = ikonJenis[tp.id] ?? FileText
@@ -1698,7 +1733,7 @@ export default function AdminDashboard() {
                                   </div>
                                   {formSub.jenis === 'video' && (
                                     <label className="db-f db-f--full">
-                                      <span>Tautan video YouTube</span>
+                                      <span title="Tautan video YouTube"><Video size={13} strokeWidth={2} /></span>
                                       <input
                                         type="url"
                                         placeholder="https://www.youtube.com/watch?v=…"
@@ -1725,10 +1760,10 @@ export default function AdminDashboard() {
                                   )}
                                   {formSub.jenis === 'kuis' && (
                                     <label className="db-f db-f--full">
-                                      <span>Rincian kuis</span>
+                                      <span title="Rincian kuis"><HelpCircle size={13} strokeWidth={2} /></span>
                                       <input
                                         type="text"
-                                        placeholder="cth. 10 soal pilihan ganda, batas 20 menit"
+                                        placeholder="Rincian kuis"
                                         value={formSub.konten}
                                         onChange={(e) => ubahSub({ konten: e.target.value })}
                                       />
@@ -1736,10 +1771,10 @@ export default function AdminDashboard() {
                                   )}
                                   {formSub.jenis === 'sesi-online' && (
                                     <label className="db-f db-f--full">
-                                      <span>Agenda sesi (opsional)</span>
+                                      <span title="Agenda sesi (opsional)"><SquarePen size={13} strokeWidth={2} /></span>
                                       <input
                                         type="text"
-                                        placeholder="cth. Praktik talaqqi bersama guru"
+                                        placeholder="Agenda sesi (opsional)"
                                         value={formSub.konten}
                                         onChange={(e) => ubahSub({ konten: e.target.value })}
                                       />
@@ -1747,10 +1782,10 @@ export default function AdminDashboard() {
                                   )}
                                   {formSub.jenis === 'sesi-offline' && (
                                     <label className="db-f db-f--full">
-                                      <span>Lokasi kelas</span>
+                                      <span title="Lokasi kelas"><MapPin size={13} strokeWidth={2} /></span>
                                       <input
                                         type="text"
-                                        placeholder="cth. Aula Hifz lantai 2, Jakarta Selatan"
+                                        placeholder="Lokasi kelas"
                                         value={formSub.konten}
                                         onChange={(e) => ubahSub({ konten: e.target.value })}
                                       />
@@ -1760,34 +1795,31 @@ export default function AdminDashboard() {
 
                                 {/* ===== Bagian 3: Pengampu & Jadwal ===== */}
                                 <div className="db-form-bagian">
-                                  <div className="db-form-bagian-judul">
-                                    <span>Pengampu & penjadwalan</span>
-                                  </div>
                                   <div className="db-form-materi-grid">
                                     <label className="db-f">
-                                      <span>Guru pengampu</span>
-                                      <input
-                                        type="text"
-                                        list="daftar-guru"
-                                        placeholder="Nama guru"
-                                        value={formSub.pengajar}
-                                        onChange={(e) => ubahSub({ pengajar: e.target.value })}
-                                      />
+                                      <span title="Guru pengampu"><GraduationCap size={13} strokeWidth={2} /></span>
+                                      <select value={formSub.pengajar} onChange={(e) => ubahSub({ pengajar: e.target.value })}>
+                                        <option value="">Pilih guru</option>
+                                        {formSub.pengajar && !daftarGuru.includes(formSub.pengajar) && (
+                                          <option value={formSub.pengajar}>{formSub.pengajar}</option>
+                                        )}
+                                        {daftarGuru.map((g) => <option key={g}>{g}</option>)}
+                                      </select>
                                     </label>
                                     <label className="db-f">
-                                      <span>Durasi (menit)</span>
+                                      <span title="Durasi (menit)"><Timer size={13} strokeWidth={2} /></span>
                                       <input
                                         type="number"
                                         min="0"
                                         step="5"
-                                        placeholder="cth. 90"
+                                        placeholder="Durasi (menit)"
                                         value={formSub.durasi}
                                         onChange={(e) => ubahSub({ durasi: e.target.value })}
                                       />
                                     </label>
                                     {(formSub.jenis === 'sesi-online' || formSub.jenis === 'sesi-offline') && (
                                       <label className="db-f">
-                                        <span>Jadwal sesi</span>
+                                        <span title="Jadwal sesi"><CalendarDays size={13} strokeWidth={2} /></span>
                                         <input
                                           type="datetime-local"
                                           value={formSub.jadwal}
@@ -1797,7 +1829,7 @@ export default function AdminDashboard() {
                                     )}
                                     {formSub.jenis === 'sesi-online' && (
                                       <label className="db-f db-f--full">
-                                        <span>Tautan Zoom / meeting</span>
+                                        <span title="Tautan Zoom / meeting"><Link2 size={13} strokeWidth={2} /></span>
                                         <input
                                           type="url"
                                           placeholder="https://zoom.us/j/…"
@@ -1831,9 +1863,6 @@ export default function AdminDashboard() {
                           )
                         })}
                       </ol>
-                      <datalist id="daftar-guru">
-                        {daftarGuru.map((g) => <option key={g} value={g} />)}
-                      </datalist>
                       </>)}
                     </section>
                   </div>
@@ -1844,31 +1873,19 @@ export default function AdminDashboard() {
                       {(() => {
                         const semua = semuaSub(program)
                         const terbit = semua.filter((m) => m.status === 'terbit').length
-                        const pct = semua.length ? Math.round((terbit / semua.length) * 100) : 0
                         const gurus = [...new Set(semua.map((m) => m.pengajar).filter(Boolean))]
                         return (
-                          <>
-                            <ul className="db-prog-rinci">
-                              <li><span>Kategori</span><strong>{program.kategori}</strong></li>
-                              <li><span>Jenis program</span><strong>{program.jenis}</strong></li>
-                              <li><span>Mode belajar</span><strong>{program.mode ?? 'Online'}</strong></li>
-                              <li><span>Bahasa pengantar</span><strong>{program.bahasa ?? 'Indonesia'}</strong></li>
-                              <li><span>Tutor pengampu</span><strong>{program.tutor || 'Belum ditentukan'}</strong></li>
-                              <li><span>Guru terlibat</span><strong>{gurus.length ? `${gurus.length} guru` : 'Belum ada'}</strong></li>
-                              <li><span>Harga</span><strong>{Number(program.harga) > 0 ? formatRupiah(program.harga) : 'Gratis'}</strong></li>
-                              <li><span>Peserta terdaftar</span><strong>{program.peserta ?? 0} orang</strong></li>
-                              <li><span>Materi</span><strong>{(program.kurikulum ?? []).length}</strong></li>
-                              <li><span>Sub materi</span><strong>{semua.length} · {terbit} terbit</strong></li>
-                            </ul>
-                            <div className="db-progres-blok">
-                              <div className="db-progres-label">
-                                <span>Kelengkapan sub materi terbit</span>
-                                <em>{pct}%</em>
-                              </div>
-                              <span className="db-progres"><i style={{ width: `${pct}%` }} /></span>
-                              <p>{terbit} dari {semua.length} sub materi terbit</p>
-                            </div>
-                          </>
+                          <ul className="db-prog-rinci">
+                            <li><span>Kategori</span><strong>{program.kategori}</strong></li>
+                            <li><span>Jenis program</span><strong>{program.jenis}</strong></li>
+                            <li><span>Mode belajar</span><strong>{program.mode ?? 'Online'}</strong></li>
+                            <li><span>Tutor pengampu</span><strong>{program.tutor || 'Belum ditentukan'}</strong></li>
+                            <li><span>Guru terlibat</span><strong>{gurus.length ? `${gurus.length} guru` : 'Belum ada'}</strong></li>
+                            <li><span>Harga</span><strong>{Number(program.harga) > 0 ? formatRupiah(program.harga) : 'Gratis'}</strong></li>
+                            <li><span>Peserta terdaftar</span><strong>{Math.max(program.peserta ?? 0, pesertaProgram(program.id).length)} orang</strong></li>
+                            <li><span>Materi</span><strong>{(program.kurikulum ?? []).length}</strong></li>
+                            <li><span>Sub materi</span><strong>{semua.length} · {terbit} terbit</strong></li>
+                          </ul>
                         )
                       })()}
                       <div className="db-prog-btns">
@@ -1876,12 +1893,6 @@ export default function AdminDashboard() {
                           {program.status === 'terbit' ? 'Tarik dari katalog' : 'Terbitkan program'}
                         </button>
                       </div>
-                      <p className="db-prog-status">
-                        <span className={`db-status ${program.status === 'terbit' ? 'is-lunas' : 'is-tunggu'}`}>
-                          {program.status === 'terbit' ? 'Terbit' : 'Draf'}
-                        </span>
-                        {program.status === 'terbit' ? 'tampil di katalog publik' : 'belum terlihat customer'}
-                      </p>
                     </section>
 
                     <section className="db-block">
@@ -1891,7 +1902,7 @@ export default function AdminDashboard() {
                       {(() => {
                         const daftarSub = semuaSub(program)
                         const gurus = [...new Set(daftarSub.map((m) => m.pengajar).filter(Boolean))]
-                        if (gurus.length === 0) return <p className="db-kosong">Belum ada guru.</p>
+                        if (gurus.length === 0) return <div className="db-kosong"><Kosong icon={UserX} teks="Belum ada guru terdaftar" /></div>
                         return (
                           <ul className="db-peserta">
                             {gurus.map((g) => (
@@ -1903,6 +1914,36 @@ export default function AdminDashboard() {
                                 </div>
                               </li>
                             ))}
+                          </ul>
+                        )
+                      })()}
+                    </section>
+
+                    <section className="db-block">
+                      <header className="db-block-head">
+                        <h4>Peserta</h4>
+                      </header>
+                      {(() => {
+                        const daftar = pesertaProgram(program.id)
+                        if (daftar.length === 0) return <div className="db-kosong"><Kosong icon={UserX} teks="Belum ada peserta" /></div>
+                        const totalSub = semuaSub(program).filter((m) => m.status === 'terbit').length
+                        return (
+                          <ul className="db-peserta">
+                            {daftar.map((email) => {
+                              const prog = hitungProgres(program, bacaProgres(email, program.id))
+                              const hadirN = bacaAbsensi(email, program.id).length
+                              const nilaiMap = bacaPenilaian(email, program.id)
+                              const dinilaiN = Object.values(nilaiMap).filter((r) => (typeof r === 'number' ? r : r?.love ?? 0) > 0).length
+                              return (
+                                <li key={email}>
+                                  <Avatar nama={email} besar />
+                                  <div>
+                                    <strong>{email}</strong>
+                                    <span>{prog.pct}% progres · hadir {Math.min(hadirN, totalSub)}/{totalSub} · dinilai {Math.min(dinilaiN, totalSub)}/{totalSub}</span>
+                                  </div>
+                                </li>
+                              )
+                            })}
                           </ul>
                         )
                       })()}
@@ -1925,34 +1966,27 @@ export default function AdminDashboard() {
                       onChange={(e) => setCariUser(e.target.value)}
                     />
                   </div>
-                  <select value={filterPeran} onChange={(e) => setFilterPeran(e.target.value)}>
-                    <option value="semua">Semua peran</option>
-                    <option value="admin">Admin</option>
-                    <option value="tutor">Guru</option>
-                    <option value="customer">Customer</option>
-                    <option value="pelamar">Pelamar guru</option>
-                  </select>
+                  <div className="db-user-stat">
+                    {[
+                      ['semua', 'Semua', pengguna.length],
+                      ['admin', 'Admin', pengguna.filter((x) => x.peran === 'admin').length],
+                      ['tutor', 'Guru', pengguna.filter((x) => x.peran === 'tutor').length],
+                      ['customer', 'Customer', pengguna.filter((x) => x.peran === 'customer').length],
+                      ['pelamar', 'Pelamar', pengguna.filter((x) => x.peran === 'pelamar').length],
+                    ].map(([nilai, label, jml]) => (
+                      <button
+                        key={nilai}
+                        type="button"
+                        className={`db-user-chip db-user-chip--${nilai}${filterPeran === nilai ? ' is-aktif' : ''}`}
+                        onClick={() => setFilterPeran(nilai)}
+                      >
+                        {label} <strong>{jml}</strong>
+                      </button>
+                    ))}
+                  </div>
                   <button type="button" className="db-btn" onClick={() => bukaEditUser(null)}>
                     <UserPlus size={15} strokeWidth={2.1} aria-hidden="true" /> Tambah
                   </button>
-                </div>
-                <div className="db-user-stat">
-                  {[
-                    ['semua', 'Semua', pengguna.length],
-                    ['admin', 'Admin', pengguna.filter((x) => x.peran === 'admin').length],
-                    ['tutor', 'Guru', pengguna.filter((x) => x.peran === 'tutor').length],
-                    ['customer', 'Customer', pengguna.filter((x) => x.peran === 'customer').length],
-                    ['pelamar', 'Pelamar', pengguna.filter((x) => x.peran === 'pelamar').length],
-                  ].map(([nilai, label, jml]) => (
-                    <button
-                      key={nilai}
-                      type="button"
-                      className={`db-user-chip db-user-chip--${nilai}${filterPeran === nilai ? ' is-aktif' : ''}`}
-                      onClick={() => setFilterPeran(nilai)}
-                    >
-                      {label} <strong>{jml}</strong>
-                    </button>
-                  ))}
                 </div>
                 {(() => {
                   const tampil = pengguna.filter(
@@ -1960,8 +1994,8 @@ export default function AdminDashboard() {
                       (filterPeran === 'semua' || u.peran === filterPeran) &&
                       `${u.nama} ${u.email}`.toLowerCase().includes(cariUser.toLowerCase()),
                   )
-                  if (pengguna.length === 0) return <p className="db-kosong">Belum ada pengguna terdaftar.</p>
-                  if (tampil.length === 0) return <p className="db-kosong">Tidak ada pengguna yang cocok dengan pencarian.</p>
+                  if (pengguna.length === 0) return <div className="db-kosong"><Kosong icon={UsersRound} teks="Belum ada pengguna terdaftar" /></div>
+                  if (tampil.length === 0) return <div className="db-kosong"><Kosong icon={SearchX} teks="Tidak ditemukan pengguna yang sesuai" /></div>
                   return (
                 <div className="db-table-card">
                   <table className="db-table">
@@ -2134,7 +2168,7 @@ export default function AdminDashboard() {
             {tab === 'transaksi' && (
               <div className="db-page">
                 {transaksi.length === 0 ? (
-                  <p className="db-kosong">Belum terdapat transaksi. Pesanan yang dibuat melalui halaman toko maupun program akan tercatat secara otomatis di sini.</p>
+                  <div className="db-kosong"><Kosong icon={ReceiptText} teks="Belum ada transaksi tercatat" /></div>
                 ) : (
                 <div className="db-table-card db-table-card--polos">
                   <div className="db-table-head">
@@ -2210,7 +2244,7 @@ export default function AdminDashboard() {
                                         <span className="db-sub-judul">
                                           <strong>{x.item}</strong>
                                           {String(x.item || '').startsWith('Perpanjangan') && <small className="db-sub-perpanjang">Permintaan perpanjangan akses program</small>}
-                                          <small>{x.invoice}{x.atasNama ? ` · Pengirim a.n. ${x.atasNama}` : ''}{x.alamat ? ` · ${x.alamat}` : ''}</small>
+                                          <small>{x.invoice}{x.atasNama ? ` · Pengirim a.n. ${x.atasNama}` : ''}</small>
                                         </span>
                                         <span>{waktuLengkap(x.createdAt) || x.tanggal}</span>
                                         <span className={`db-sub-jenis is-${jenis}`}>
@@ -2221,8 +2255,8 @@ export default function AdminDashboard() {
                                         <strong>{formatRupiah(x.total)}</strong>
                                         <span className="db-sub-status">
                                           <span className={`db-sub-stat ${x.status === 'Lunas' ? 'is-lunas' : x.status === 'Menunggu' ? 'is-tunggu' : 'is-batal'}`}>{x.status}</span>
-                                          <button type="button" className="db-um-ic is-ok" title={x.status === 'Menunggu' ? 'Tandai lunas — konfirmasi pembayaran customer' : x.status === 'Lunas' ? 'Pembayaran sudah lunas' : 'Transaksi dibatalkan'} disabled={x.status !== 'Menunggu'} onClick={() => tandaiLunas(x.invoice)}><Check size={14} strokeWidth={2.2} /></button>
-                                          <button type="button" className="db-um-ic db-um-ic--mati" title={x.status === 'Menunggu' ? 'Batalkan transaksi' : 'Hanya transaksi menunggu yang bisa dibatalkan'} disabled={x.status !== 'Menunggu'} onClick={() => batalkan(x.invoice)}><X size={14} strokeWidth={2.2} /></button>
+                                          <button type="button" className="db-um-ic is-ok" title={x.status !== 'Menunggu' ? (x.status === 'Lunas' ? 'Pembayaran sudah lunas' : 'Transaksi dibatalkan') : !x.invoiceFile ? 'Unggah invoice terlebih dahulu' : 'Tandai lunas — konfirmasi pembayaran customer'} disabled={x.status !== 'Menunggu' || !x.invoiceFile} onClick={() => tandaiLunas(x.invoice)}><Check size={14} strokeWidth={2.2} /></button>
+                                          <button type="button" className="db-um-ic db-um-ic--mati" title={x.status !== 'Menunggu' ? 'Hanya transaksi menunggu yang bisa dibatalkan' : !x.invoiceFile ? 'Unggah invoice terlebih dahulu' : 'Batalkan transaksi'} disabled={x.status !== 'Menunggu' || !x.invoiceFile} onClick={() => batalkan(x.invoice)}><X size={14} strokeWidth={2.2} /></button>
                                         </span>
                                         <span className="db-td-aksi db-td-aksi--ikon">
                                           {x.buktiBayar && (
@@ -2367,7 +2401,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setFormProduk((f) => ({ ...f, stok: e.target.value }))}
                         />
                       </label>
-                      <label className="db-tf">
+                      <label className="db-tf is-lebar">
                         <span>Harga (Rp)</span>
                         <input
                           type="number"
@@ -2377,7 +2411,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setFormProduk((f) => ({ ...f, harga: e.target.value }))}
                         />
                       </label>
-                      <label className="db-tf">
+                      <label className="db-tf is-lebar">
                         <span>Harga coret</span>
                         <input
                           type="number"
@@ -2422,9 +2456,9 @@ export default function AdminDashboard() {
                     const q = cariProduk.trim().toLowerCase()
                     const tampil = produk.filter((p) => !q || `${p.nama} ${p.kategori}`.toLowerCase().includes(q))
                     if (produk.length === 0)
-                      return <p className="db-kosong">Belum ada produk. Tambahkan produk pertama lewat formulir di atas.</p>
+                      return <div className="db-kosong"><Kosong icon={PackageOpen} teks="Belum ada produk" /></div>
                     if (tampil.length === 0)
-                      return <p className="db-kosong">Tidak ada produk yang cocok dengan pencarian &ldquo;{cariProduk}&rdquo;.</p>
+                      return <div className="db-kosong"><Kosong icon={SearchX} teks={`Tidak ditemukan produk untuk \u201c${cariProduk}\u201d`} /></div>
                     return (
                       <div className="db-table-card">
                         <table className="db-table db-table--toko">
@@ -2522,8 +2556,7 @@ export default function AdminDashboard() {
 
                 <section className="db-block">
                   <header className="db-block-head">
-                    <h4><SquarePen size={15} strokeWidth={2} /> Tulis berita baru</h4>
-                    <span className="db-toko-hint">Semua kolom wajib diisi, tersimpan sebagai draf</span>
+                    <h4><SquarePen size={15} strokeWidth={2} /> Tulis berita</h4>
                   </header>
                   <form className="db-toko-form" onSubmit={tambahBerita} noValidate>
                     <div className="db-berita-atas">
@@ -2549,8 +2582,7 @@ export default function AdminDashboard() {
                           ) : (
                             <>
                               <Upload size={17} strokeWidth={1.9} />
-                              <span>Unggah gambar sampul</span>
-                              <small>Disarankan lanskap, minimal 1200px</small>
+                              <span>Unggah sampul</span>
                             </>
                           )}
                         </label>
@@ -2558,10 +2590,10 @@ export default function AdminDashboard() {
                       </div>
                       <div className="db-berita-kolom">
                         <label className="db-tf">
-                          <span>Judul berita</span>
+                          <span>Judul</span>
                           <input
                             type="text"
-                            placeholder="cth. Wisuda Akbar Tahfizh Angkatan ke-3"
+                            placeholder="Judul berita"
                             value={formBerita.judul}
                             onChange={(e) => setFormBerita((f) => ({ ...f, judul: e.target.value }))}
                           />
@@ -2579,10 +2611,10 @@ export default function AdminDashboard() {
                           </select>
                         </label>
                         <label className="db-tf">
-                          <span>Ringkasan singkat <i className="db-tf-count">{formBerita.ringkas.trim().length}/20 min</i></span>
+                          <span>Ringkasan <i className="db-tf-count">{formBerita.ringkas.trim().length}/20</i></span>
                           <input
                             type="text"
-                            placeholder="Satu-dua kalimat yang tampil di kartu berita beranda"
+                            placeholder="Ringkasan singkat"
                             value={formBerita.ringkas}
                             onChange={(e) => setFormBerita((f) => ({ ...f, ringkas: e.target.value }))}
                           />
@@ -2591,10 +2623,10 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <label className="db-tf">
-                      <span>Isi berita <i className="db-tf-count">{formBerita.konten.trim().length}/100 min &middot; pisahkan paragraf dengan baris kosong</i></span>
+                      <span>Isi <i className="db-tf-count">{formBerita.konten.trim().length}/100</i></span>
                       <textarea
                         rows="8"
-                        placeholder="Tulis isi berita lengkap di sini…"
+                        placeholder="Isi berita…"
                         value={formBerita.konten}
                         onChange={(e) => setFormBerita((f) => ({ ...f, konten: e.target.value }))}
                       />
@@ -2613,7 +2645,7 @@ export default function AdminDashboard() {
                     <h4><Newspaper size={15} strokeWidth={2} /> Daftar berita</h4>
                   </header>
                   {berita.length === 0 ? (
-                    <p className="db-kosong">Belum ada berita. Tulis berita pertama lewat formulir di atas, tersimpan sebagai draf sampai diterbitkan.</p>
+                    <div className="db-kosong"><Kosong icon={FileText} teks="Belum ada artikel" /></div>
                   ) : (
                     <div className="db-berita-list">
                       {berita.map((b) => (

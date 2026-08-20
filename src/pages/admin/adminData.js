@@ -1,18 +1,10 @@
 // Konfigurasi & lapisan data Hifz — tanpa data contoh.
-// Seluruh data nyata (program, pengguna, transaksi, produk, berita, aktivitas)
-// tersimpan di localStorage dan dikelola lewat dashboard super admin.
-
-export const admin = {
-  nama: 'Admin Hifz',
-  email: 'alialatas6797@gmail.com',
-  peran: 'Super Admin',
-}
+// Seluruh data nyata dikelola di Supabase lewat dashboard super admin.
 
 export const kategoriProgram = ['Qur\u2019an Journey', 'Islamic Deeper', 'Turats', 'Arabic & TOAFL Prep']
 export const jenisProgram = ['Daily', 'Short Course', 'Bootcamp', 'Private']
 export const modeProgram = ['Online', 'Offline', 'Hibrida']
 export const tingkatProgram = ['Pemula', 'Menengah', 'Lanjut']
-export const bahasaProgram = ['Indonesia', 'Arab', 'Inggris', 'Campuran']
 export const statusProgram = ['Draf', 'Terbit']
 
 export const jenisPembelajaran = [

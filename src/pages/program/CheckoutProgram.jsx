@@ -12,6 +12,7 @@ import { formatRupiah, bacaPengguna, bacaKeranjang, simpanKeranjang, simpanPesan
 import { semuaSub } from '../admin/adminData.js'
 import { daftarJadwal, formatTanggalPanjang } from '../../lib/kalender.js'
 import { api, kompresFoto } from '../../lib/api.js'
+import { qrisDinamis } from '../../lib/qris.js'
 
 const WA_CS = 'https://wa.me/6285210447200'
 
@@ -35,6 +36,8 @@ export default function CheckoutProgram() {
   const [atasNama, setAtasNama] = useState(pengguna?.nama || '')
   const [bukti, setBukti] = useState('')
   const [buktiGalat, setBuktiGalat] = useState('')
+  const [bulan, setBulan] = useState(1)
+  const [qrNominal, setQrNominal] = useState('')
 
   useEffect(() => {
     let hidup = true
@@ -54,6 +57,19 @@ export default function CheckoutProgram() {
   }, [programId])
 
   const total = baris.reduce((t, b) => t + Number(b.harga || 0) * (b.jumlah || 1), 0)
+  const totalBayar = total * bulan
+
+  useEffect(() => {
+    if (!popupBuka) return
+    let hidup = true
+    setQrNominal('')
+    qrisDinamis(totalBayar)
+      .then((url) => hidup && setQrNominal(url))
+      .catch(() => hidup && setQrNominal(''))
+    return () => {
+      hidup = false
+    }
+  }, [popupBuka, totalBayar])
   const kurikulum = program?.kurikulum ?? []
   const semua = program ? semuaSub(program) : []
   const sesiOnline = semua.filter((m) => m.jenis === 'sesi-online').length
@@ -123,9 +139,9 @@ export default function CheckoutProgram() {
       const pesanan = await api('/toko/orders', {
         method: 'POST',
         body: {
-          item: baris.map((b) => b.nama).join(' · '),
+          item: `${baris.map((b) => b.nama).join(' · ')} · ${bulan} bulan`,
           metode,
-          total,
+          total: totalBayar,
           jenis: 'program',
           penerima: pengguna.nama,
           email: pengguna.email,
@@ -294,9 +310,19 @@ export default function CheckoutProgram() {
                   <span>Subtotal</span>
                   <strong>{formatRupiah(total)}</strong>
                 </div>
+                <div className="tk-ringkasan-baris cop-durasi-baris">
+                  <span>Durasi akses</span>
+                  <div className="bayar-durasi" role="radiogroup" aria-label="Durasi akses">
+                    {[1, 2, 3, 6, 12].map((b) => (
+                      <button key={b} type="button" className={bulan === b ? 'is-active' : ''} aria-pressed={bulan === b} onClick={() => setBulan(b)}>
+                        {b} bln
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="tk-ringkasan-baris tk-ringkasan-baris--total">
                   <span>Total</span>
-                  <strong>{formatRupiah(total)}</strong>
+                  <strong>{formatRupiah(totalBayar)}</strong>
                 </div>
                 {galat && <p className="tk-galat">{galat}</p>}
                 <button type="submit" className="tk-btn tk-btn--blok" disabled={memproses || !profilLengkap}>
@@ -347,16 +373,21 @@ export default function CheckoutProgram() {
 
                 <div className="cop-modal-rinci">
                   <div><span>Metode</span><strong>{metode}</strong></div>
-                  <div><span>Total</span><strong>{formatRupiah(total)}</strong></div>
+                  <div><span>Durasi</span><strong>{bulan} bulan</strong></div>
+                  <div><span>Total</span><strong>{formatRupiah(totalBayar)}</strong></div>
                 </div>
 
                 <figure className="cop-qr">
                   <img
-                    src="/pay/qris-code.png"
+                    src={qrNominal || '/pay/qris-code.png'}
                     alt="Kode QRIS pembayaran Hifz"
                     onError={(e) => { e.currentTarget.src = '/pay/qris.svg' }}
                   />
-                  <figcaption>Scan kode QRIS dari aplikasi pembayaran apa pun.</figcaption>
+                  <figcaption>
+                    {qrNominal
+                      ? `Scan QRIS — nominal ${formatRupiah(totalBayar)} otomatis terisi.`
+                      : 'Scan kode QRIS dari aplikasi pembayaran apa pun.'}
+                  </figcaption>
                 </figure>
 
                 <form className="cop-bukti" onSubmit={kirimBukti}>

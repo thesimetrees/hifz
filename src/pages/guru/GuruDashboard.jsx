@@ -10,7 +10,7 @@ import {
   ClipboardCheck,
   FileText,
   GraduationCap,
-  Heart,
+  Star,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -23,9 +23,9 @@ import {
 } from 'lucide-react'
 import FormGuru from '../../components/FormGuru.jsx'
 import { api } from '../../lib/api.js'
-import { bacaProfilGuru, simpanProfilGuru } from '../../lib/guru.js'
+import { bacaProfilGuru, muatProfilGuru, simpanProfilGuru } from '../../lib/guru.js'
 import { HARI_URUT, daftarJadwal, formatTanggalPanjang, ringkasJadwal, sesiBerikutnya } from '../../lib/kalender.js'
-import { absenHadir, bacaAbsensi, bacaPenilaian, bacaProgres, beriNilai, hitungProgres, ikutiProgram, pesertaProgram } from '../../lib/progres.js'
+import { absenHadir, bacaAbsensi, bacaPenilaian, bacaProgres, beriNilai, hitungProgres, ikutiProgram, pesertaProgram, sinkronBelajar } from '../../lib/progres.js'
 import { gambarKategori, inisial, labelTipe, formatJadwalSub } from '../admin/adminData.js'
 
 const NAV = [
@@ -105,14 +105,51 @@ export default function GuruDashboard() {
       } catch {
         // server tidak terjangkau, coba lagi pada siklus berikutnya
       }
+      // pesanan lunas (termasuk perpanjangan yang di-acc admin) ikut direkam
+      try {
+        const orders = await api('/toko/orders', { auth: false })
+        if (!hidup) return
+        for (const o of Array.isArray(orders) ? orders : [])
+          if (o?.status === 'Lunas' && (o.jenis ?? 'toko') === 'program' && o.email && Array.isArray(o.programIds))
+            for (const pid of o.programIds) ikutiProgram(o.email, pid)
+      } catch {
+        // abaikan, sumber enrollments sudah cukup
+      }
+      // segarkan daftar program agar penugasan terbaru ikut tampil
+      try {
+        const daftar = await api('/programs', { auth: false })
+        if (hidup && Array.isArray(daftar)) setPrograms(daftar)
+      } catch {
+        // biarkan data program lama
+      }
       if (hidup) setVersi((v) => v + 1)
     }
     sinkron()
     const id = setInterval(sinkron, 15000)
+    // segarkan langsung saat guru kembali membuka tab
+    const onFokus = () => sinkron()
+    window.addEventListener('focus', onFokus)
+    document.addEventListener('visibilitychange', onFokus)
+    // perubahan localStorage dari tab lain (absensi/penilaian/progres murid)
+    const onStorage = (e) => {
+      if (e.key && e.key.startsWith('hifz')) setVersi((v) => v + 1)
+    }
+    window.addEventListener('storage', onStorage)
     return () => {
       hidup = false
       clearInterval(id)
+      window.removeEventListener('focus', onFokus)
+      document.removeEventListener('visibilitychange', onFokus)
+      window.removeEventListener('storage', onStorage)
     }
+  }, [])
+
+  // realtime Supabase: progres/absensi/penilaian lintas perangkat
+  useEffect(() => sinkronBelajar(() => setVersi((v) => v + 1)), [])
+
+  // profil guru dari Supabase ke cache lokal
+  useEffect(() => {
+    muatProfilGuru().then(() => setVersi((v) => v + 1))
   }, [])
 
   const kelasSaya = useMemo(() => {
@@ -645,66 +682,86 @@ export default function GuruDashboard() {
                                     <span className="db-sil-ic"><Icon size={15} strokeWidth={1.9} /></span>
                                     <div>
                                       <strong>{s.judul}</strong>
-                                      {s.narasi && <p>{s.narasi}</p>}
+                                      <span className="db-sub-meta">
+                                        {[labelTipe(s.jenis), s.metode, s.durasi ? `${s.durasi} menit` : null, s.jadwal ? formatJadwalSub(s.jadwal) : null]
+                                          .filter(Boolean)
+                                          .join(' \u00b7 ')}
+                                      </span>
                                       <span className="db-sub-chips">
-                                        <em>{labelTipe(s.jenis)}</em>
-                                        {s.metode && <em>{s.metode}</em>}
-                                        {s.durasi ? <em>{s.durasi} menit</em> : null}
-                                        {s.jadwal && (
-                                          <em><CalendarClock size={11} strokeWidth={1.9} /> {formatJadwalSub(s.jadwal)}</em>
-                                        )}
                                         {s.pengajar && (
                                           <em className={saya ? 'is-saya' : ''}>
-                                            <GraduationCap size={11} strokeWidth={1.9} /> {saya ? 'Anda' : s.pengajar}
+                                            <GraduationCap size={11} strokeWidth={1.9} /> {saya ? 'Anda pengajarnya' : s.pengajar}
                                           </em>
                                         )}
                                         {pesertaKelas.length > 0 && (
-                                          <em className={dinilaiN === pesertaKelas.length ? 'is-ok' : ''}>
-                                            <Heart size={11} strokeWidth={1.9} /> {dinilaiN}/{pesertaKelas.length} dinilai
+                                          <em className={dinilaiN === pesertaKelas.length ? 'is-ok' : 'is-tunggu'}>
+                                            <Star size={11} strokeWidth={1.9} /> {dinilaiN === pesertaKelas.length ? 'Semua dinilai' : `${dinilaiN}/${pesertaKelas.length} dinilai`}
                                           </em>
                                         )}
                                       </span>
                                       {subNilaiBuka === s.id && (
-                                        <ul className="db-sub-nilai">
+                                        <div className="db-sub-panel">
+                                          <header>
+                                            <strong>Penilaian & absensi</strong>
+                                            {pesertaKelas.length > 0 && <span>{dinilaiN}/{pesertaKelas.length} dinilai</span>}
+                                          </header>
                                           {pesertaKelas.length === 0 ? (
-                                            <li className="db-sub-nilai-kosong">Belum ada peserta.</li>
+                                            <p className="db-sub-nilai-kosong">Belum ada peserta terdaftar di kelas ini.</p>
                                           ) : (
-                                            pesertaKelas.map((email) => {
-                                              const d = ambilDraft(email, kelas.id, s.id)
-                                              return (
-                                                <li key={email}>
-                                                  <span className="db-peserta-ava">{inisial(email)}</span>
-                                                  <strong>{email}</strong>
-                                                  <span className="db-love db-love--pilih">
-                                                    {[1, 2, 3, 4, 5].map((n) => (
-                                                      <button
-                                                        key={n}
-                                                        type="button"
-                                                        aria-label={`${n} dari 5`}
-                                                        className={n <= d.love ? 'is-isi' : ''}
-                                                        onClick={() => ubahDraft(email, kelas.id, s.id, { love: n })}
-                                                      >
-                                                        <Heart size={15} strokeWidth={1.9} />
-                                                      </button>
-                                                    ))}
-                                                  </span>
-                                                  <input
-                                                    value={d.komentar}
-                                                    placeholder="Komentar"
-                                                    onChange={(e) => ubahDraft(email, kelas.id, s.id, { komentar: e.target.value })}
-                                                  />
-                                                  <button
-                                                    type="button"
-                                                    className="db-btn db-btn--sm"
-                                                    onClick={() => simpanNilai(email, kelas.id, s.id)}
-                                                  >
-                                                    Simpan
-                                                  </button>
-                                                </li>
-                                              )
-                                            })
+                                            <ul className="db-sub-nilai">
+                                              {pesertaKelas.map((email) => {
+                                                const d = ambilDraft(email, kelas.id, s.id)
+                                                const sudahHadir = bacaAbsensi(email, kelas.id).includes(s.id)
+                                                const sudahDinilai = nilaiDari(bacaPenilaian(email, kelas.id)[s.id]).love > 0
+                                                return (
+                                                  <li key={email}>
+                                                    <span className="db-peserta-ava">{inisial(email)}</span>
+                                                    <span className="db-sub-nilai-id">
+                                                      <strong>{email.split('@')[0]}</strong>
+                                                      <small>{email}</small>
+                                                    </span>
+                                                    <button
+                                                      type="button"
+                                                      className={`db-hadir-chip${sudahHadir ? ' is-hadir' : ''}`}
+                                                      title={sudahHadir ? 'Tandai belum hadir' : 'Tandai hadir'}
+                                                      onClick={() => {
+                                                        absenHadir(email, kelas.id, s.id, !sudahHadir)
+                                                        setVersi((v) => v + 1)
+                                                      }}
+                                                    >
+                                                      <UserCheck size={12} strokeWidth={2} /> {sudahHadir ? 'Hadir' : 'Belum hadir'}
+                                                    </button>
+                                                    <span className="db-love db-love--pilih">
+                                                      {[1, 2, 3, 4, 5].map((n) => (
+                                                        <button
+                                                          key={n}
+                                                          type="button"
+                                                          aria-label={`${n} dari 5`}
+                                                          className={n <= d.love ? 'is-isi' : ''}
+                                                          onClick={() => ubahDraft(email, kelas.id, s.id, { love: n })}
+                                                        >
+                                                          <Star size={15} strokeWidth={1.9} />
+                                                        </button>
+                                                      ))}
+                                                    </span>
+                                                    <input
+                                                      value={d.komentar}
+                                                      placeholder="Catatan untuk peserta"
+                                                      onChange={(e) => ubahDraft(email, kelas.id, s.id, { komentar: e.target.value })}
+                                                    />
+                                                    <button
+                                                      type="button"
+                                                      className="db-btn db-btn--sm"
+                                                      onClick={() => simpanNilai(email, kelas.id, s.id)}
+                                                    >
+                                                      {sudahDinilai ? 'Perbarui' : 'Simpan'}
+                                                    </button>
+                                                  </li>
+                                                )
+                                              })}
+                                            </ul>
                                           )}
-                                        </ul>
+                                        </div>
                                       )}
                                     </div>
                                     {s.tautan && (
@@ -742,9 +799,6 @@ export default function GuruDashboard() {
                         {kelas.mode && <li><MapPin size={14} strokeWidth={1.9} /> {kelas.mode}</li>}
                         <li><Users size={14} strokeWidth={1.9} /> {pesertaKelas.length} peserta</li>
                       </ul>
-                      <button type="button" className="db-btn db-btn--sm db-btn-blockfoot" onClick={() => setTab('penilaian')}>
-                        Beri penilaian
-                      </button>
                     </section>
 
                     {pesertaKelas.length > 0 && subs.length > 0 && (
@@ -761,7 +815,7 @@ export default function GuruDashboard() {
                             return (
                               <li key={s.id}>
                                 <span>{s.judul}</span>
-                                <b>{rerata ? <><Heart size={12} strokeWidth={1.9} /> {rerata}</> : '—'}</b>
+                                <b>{rerata ? <><Star size={12} strokeWidth={1.9} /> {rerata}</> : '—'}</b>
                               </li>
                             )
                           })}
@@ -786,7 +840,11 @@ export default function GuruDashboard() {
                                 <div>
                                   <strong>{email}</strong>
                                   <Bar value={prog.pct} />
-                                  <span>{prog.pct}% progres · hadir {hadir.length}/{prog.total} · dinilai {dinilai}/{prog.total}</span>
+                                  <span className="db-peserta-chips">
+                                    <em>{prog.pct}% progres</em>
+                                    <em className={hadir.length === prog.total && prog.total > 0 ? 'is-ok' : ''}>hadir {hadir.length}/{prog.total}</em>
+                                    <em className={dinilai === prog.total && prog.total > 0 ? 'is-ok' : ''}>dinilai {dinilai}/{prog.total}</em>
+                                  </span>
                                 </div>
                               </li>
                             )
@@ -907,7 +965,7 @@ export default function GuruDashboard() {
                                         className={n <= d.love ? 'is-isi' : ''}
                                         onClick={() => ubahDraft(email, kelas.id, s.id, { love: n })}
                                       >
-                                        <Heart size={15} strokeWidth={1.9} />
+                                        <Star size={15} strokeWidth={1.9} />
                                       </button>
                                     ))}
                                   </span>

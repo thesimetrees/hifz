@@ -1,17 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, CloudUpload, X } from 'lucide-react'
 import { api, kompresFoto } from '../lib/api.js'
+import { qrisDinamis } from '../lib/qris.js'
 import { simpanPesanan } from '../pages/toko/tokoData.js'
 import { formatRupiah } from '../pages/admin/adminData.js'
+
+const OPSI_BULAN = [1, 2, 3, 6, 12]
 
 export default function BayarModal({ buka, item, total, penerima, email, programIds, onTutup, onSelesai }) {
   const [atasNama, setAtasNama] = useState('')
   const [bukti, setBukti] = useState('')
+  const [bulan, setBulan] = useState(1)
   const [memproses, setMemproses] = useState(false)
   const [galat, setGalat] = useState('')
   const [pesanan, setPesanan] = useState(null)
   const perpanjang = String(item || '').startsWith('Perpanjangan')
+  const totalBayar = Number(total || 0) * bulan
+  const [qrNominal, setQrNominal] = useState('')
+
+  useEffect(() => {
+    if (!buka) return
+    let hidup = true
+    setQrNominal('')
+    qrisDinamis(totalBayar)
+      .then((url) => hidup && setQrNominal(url))
+      .catch(() => hidup && setQrNominal(''))
+    return () => {
+      hidup = false
+    }
+  }, [buka, totalBayar])
 
   const pilihBukti = async (e) => {
     const file = e.target.files?.[0]
@@ -36,7 +54,7 @@ export default function BayarModal({ buka, item, total, penerima, email, program
     try {
       const hasil = await api('/toko/orders', {
         method: 'POST',
-        body: { item, metode: 'QRIS', total, jenis: 'program', penerima, email, programIds },
+        body: { item: `${item} · ${bulan} bulan`, metode: 'QRIS', total: totalBayar, jenis: 'program', penerima, email, programIds },
         auth: false,
       })
       simpanPesanan({
@@ -106,15 +124,26 @@ export default function BayarModal({ buka, item, total, penerima, email, program
               <>
                 <h3 className="bayar-judul">Selesaikan pembayaran</h3>
                 <p className="bayar-item">
-                  {item} · <strong>{formatRupiah(total)}</strong>
+                  {item} · {bulan} bulan · <strong>{formatRupiah(totalBayar)}</strong>
                 </p>
+                <div className="bayar-durasi" role="radiogroup" aria-label="Durasi akses">
+                  {OPSI_BULAN.map((b) => (
+                    <button key={b} type="button" className={bulan === b ? 'is-active' : ''} aria-pressed={bulan === b} onClick={() => setBulan(b)}>
+                      {b} bulan
+                    </button>
+                  ))}
+                </div>
                 <figure className="cop-qr">
                   <img
-                    src="/pay/qris-code.png"
+                    src={qrNominal || '/pay/qris-code.png'}
                     alt="Kode QRIS pembayaran Hifz"
                     onError={(e) => { e.currentTarget.src = '/pay/qris.svg' }}
                   />
-                  <figcaption>Scan kode QRIS dari aplikasi pembayaran apa pun.</figcaption>
+                  <figcaption>
+                    {qrNominal
+                      ? `Scan QRIS — nominal ${formatRupiah(totalBayar)} otomatis terisi.`
+                      : 'Scan kode QRIS dari aplikasi pembayaran apa pun.'}
+                  </figcaption>
                 </figure>
                 <form className="cop-bukti" onSubmit={kirimBukti}>
                   <div className="cop-bukti-baris">

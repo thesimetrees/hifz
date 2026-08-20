@@ -1,4 +1,4 @@
-// Prisma schema Ihya — CMS super admin (PostgreSQL via Supabase)
+// Prisma schema Hifz — hanya tabel yang dipakai frontend (PostgreSQL via Supabase)
 
 generator client {
   provider = "prisma-client-js"
@@ -19,13 +19,12 @@ model User {
   peran     String   @default("customer")
   aktif     Boolean  @default(true)
   telepon   String?
-  alamat    String?
-  bio       String?
-  foto      String?
+  alamat       String?
+  alamatDetail Json?
+  bio          String?
+  foto         String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  programOrders ProgramOrder[]
 
   @@map("users")
 }
@@ -47,8 +46,6 @@ model Program {
   jadwal    String   @default("null")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  orders ProgramOrder[]
 
   @@map("programs")
 }
@@ -116,83 +113,4 @@ model Post {
   updatedAt DateTime @updatedAt
 
   @@map("posts")
-}
-
-// ---- Checkout program & konfirmasi QRIS manual ----
-
-// status: PENDING_PAYMENT | WAITING_CONFIRMATION | PROCESSING | CONFIRMED | REJECTED | EXPIRED | CANCELLED
-model ProgramOrder {
-  id            String    @id @default(cuid())
-  invoice       String    @unique
-  userId        String
-  programId     String
-  amountBase    Int
-  amountUnique  Int       @default(0)
-  amountTotal   Int
-  status        String    @default("PENDING_PAYMENT")
-  statusVersion Int       @default(0)
-  expiresAt     DateTime
-  lockedById    String?
-  lockedAt      DateTime?
-  confirmedAt   DateTime?
-  rejectReason  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  user    User           @relation(fields: [userId], references: [id])
-  program Program        @relation(fields: [programId], references: [id])
-  proofs  PaymentProof[]
-
-  @@index([status, expiresAt])
-  @@index([userId, status])
-  @@map("program_orders")
-}
-
-// status: active | superseded | rejected
-model PaymentProof {
-  id         String   @id @default(cuid())
-  orderId    String
-  attempt    Int
-  senderName String
-  senderBank String?
-  imagePath  String
-  imageMime  String
-  imageSize  Int
-  status     String   @default("active")
-  createdAt  DateTime @default(now())
-
-  order ProgramOrder @relation(fields: [orderId], references: [id])
-
-  @@unique([orderId, attempt])
-  @@map("payment_proofs")
-}
-
-// type: new_payment_proof | payment_confirmed | payment_rejected | order_expired
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  orderId   String?
-  type      String
-  message   String
-  meta      String   @default("{}")
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([userId, isRead, createdAt])
-  @@map("notifications")
-}
-
-// action: lock | unlock | approve | reject | auto_expire | auto_unlock — append-only
-model AuditLog {
-  id        String   @id @default(cuid())
-  actorId   String
-  orderId   String
-  action    String
-  fromState String
-  toState   String
-  reason    String?
-  createdAt DateTime @default(now())
-
-  @@index([orderId, createdAt])
-  @@map("audit_logs")
 }
