@@ -5,3 +5,5 @@ dist/
 *.log
 .DS_Store
 server/prisma/dev.db
+.vercel
+.env*
